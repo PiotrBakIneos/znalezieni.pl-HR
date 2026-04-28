@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>znalezieni.pl — AI Screening Kandydatów</title>
+<title>znalezieni.pl — Screening Kandydatów</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -21,7 +21,6 @@
   .header{background:var(--navy);padding:1.25rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.3)}
   .logo{font-family:'Playfair Display',Georgia,serif;font-size:1.6rem;color:var(--cream)}
   .logo span{color:var(--gold)}
-  .logo-sub{font-size:.7rem;color:#666;letter-spacing:2.5px;text-transform:uppercase;margin-top:2px}
   .tabs{display:flex;gap:6px}
   .tab-btn{padding:7px 18px;border-radius:6px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;transition:all .2s}
   .tab-btn.active{background:var(--gold);color:var(--navy);font-weight:700}
@@ -30,7 +29,11 @@
 
   .main{max-width:980px;margin:0 auto;padding:2rem 1.5rem 4rem}
   .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
-  label.field-label{display:block;font-size:.72rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#666;margin-bottom:6px}
+
+  .field-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  label.field-label{font-size:.72rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#666}
+  .btn-clear{background:none;border:none;font-size:.72rem;color:#bbb;cursor:pointer;padding:2px 8px;border-radius:4px;font-family:'DM Sans',sans-serif;transition:all .15s}
+  .btn-clear:hover{color:var(--red-text);background:var(--red-bg)}
 
   textarea{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'Courier New',monospace;font-size:.8rem;line-height:1.65;resize:vertical;background:var(--card);color:var(--text);transition:border-color .2s}
   textarea:focus{outline:none;border-color:var(--gold)}
@@ -58,12 +61,9 @@
   .btn-secondary:hover{border-color:var(--gold);color:var(--navy)}
   .btn-export{padding:8px 18px;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer}
   .btn-export:hover{background:#d8edca}
-  .btn-row{display:flex;gap:10px;margin-bottom:2rem}
+  .btn-row{display:flex;gap:10px;margin-bottom:1rem}
 
-  .api-notice{background:linear-gradient(135deg,#FFF9EE,#FFFDF7);border:1px solid var(--amber-border);border-radius:10px;padding:14px 18px;margin-bottom:16px;font-size:.82rem;color:#5a3800;display:flex;align-items:flex-start;gap:10px}
-  .api-key-row{display:flex;align-items:center;gap:8px;margin-top:8px}
-  .api-key-input{flex:1;padding:8px 12px;border:1.5px solid var(--amber-border);border-radius:8px;font-family:'Courier New',monospace;font-size:.8rem;background:#fff;color:var(--text)}
-  .api-key-input:focus{outline:none;border-color:var(--gold)}
+  .search-counter{text-align:right;font-size:.75rem;color:#bbb;margin-bottom:1rem}
 
   .error-box{background:var(--red-bg);color:var(--red-text);padding:10px 16px;border-radius:8px;font-size:.82rem;margin-bottom:12px;display:none}
   .loading-box{text-align:center;padding:3rem;color:#888;display:none}
@@ -110,10 +110,7 @@
 <body>
 
 <div class="header">
-  <div>
-    <div class="logo">znalezieni<span>.pl</span></div>
-    <div class="logo-sub">AI Screening Kandydatów</div>
-  </div>
+  <div class="logo">znalezieni<span>.pl</span></div>
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('tool')">Narzędzie</button>
     <button class="tab-btn" onclick="switchTab('data')">Dane testowe</button>
@@ -124,21 +121,12 @@
 
   <!-- TOOL TAB -->
   <div id="tab-tool">
-    <div class="api-notice">
-      <div style="font-size:1.2rem;flex-shrink:0">🔑</div>
-      <div>
-        <strong>Klucz API Anthropic</strong> — wpisz swój klucz aby korzystać z narzędzia. Klucz przechowywany wyłącznie w przeglądarce (sessionStorage) i trafia tylko do API Anthropic.
-        <div class="api-key-row">
-          <input type="password" class="api-key-input" id="api-key-input" placeholder="sk-ant-..." autocomplete="off">
-          <button class="btn-secondary" style="padding:8px 14px;font-size:.8rem" onclick="saveApiKey()">Zapisz</button>
-          <span id="key-saved" style="font-size:.78rem;color:var(--green-text);display:none">✓ Zapisano</span>
-        </div>
-      </div>
-    </div>
-
     <div class="grid-2">
       <div>
-        <label class="field-label">Ogłoszenie o pracę</label>
+        <div class="field-header">
+          <label class="field-label">Ogłoszenie o pracę</label>
+          <button class="btn-clear" onclick="clearJob()">✕ Wyczyść</button>
+        </div>
         <div class="upload-zone" id="job-upload-zone" onclick="document.getElementById('job-file-input').click()">
           <div class="upload-icon">📋</div>
           <div class="upload-text"><strong>Kliknij lub przeciągnij PDF z ogłoszeniem</strong></div>
@@ -148,7 +136,10 @@
         <textarea id="job-desc" placeholder="…lub wklej treść ogłoszenia — stanowisko, wymagania, zakres obowiązków..." style="height:220px"></textarea>
       </div>
       <div>
-        <label class="field-label">CV Kandydatów</label>
+        <div class="field-header">
+          <label class="field-label">CV Kandydatów</label>
+          <button class="btn-clear" onclick="clearCVs()">✕ Wyczyść</button>
+        </div>
         <div class="upload-zone" id="cv-upload-zone" onclick="document.getElementById('cv-file-input').click()">
           <div class="upload-icon">📎</div>
           <div class="upload-text"><strong>Kliknij lub przeciągnij pliki PDF z CV</strong><br><span style="font-size:.75rem">Możesz wgrać wiele plików jednocześnie</span></div>
@@ -164,9 +155,10 @@
       <button class="btn-primary" id="screen-btn" onclick="screenCVs()">Przeanalizuj CV →</button>
       <button class="btn-secondary" onclick="switchTab('data')">Dane testowe</button>
     </div>
+    <div id="search-counter" class="search-counter"></div>
     <div class="loading-box" id="loading-box">
       <div class="loading-spinner"></div>
-      <div style="font-size:.95rem;color:#555">Claude analizuje kandydatów…</div>
+      <div style="font-size:.95rem;color:#555">Trwa analiza kandydatów…</div>
       <div style="font-size:.8rem;color:#aaa;margin-top:6px">To zajmie około 15–30 sekund</div>
     </div>
     <div id="results-section" style="display:none"></div>
@@ -190,54 +182,44 @@
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-const SYSTEM_PROMPT=`Jesteś ekspertem rekrutera z 15-letnim doświadczeniem w Polsce. Analizujesz CV kandydatów względem ogłoszenia o pracę.
-
-Dla każdego kandydata zwróć WYŁĄCZNIE obiekt JSON (bez żadnego tekstu przed ani po):
-
-{
-  "kandydaci": [
-    {
-      "imie_nazwisko": "string",
-      "wynik": number (1-10),
-      "mocne_strony": ["string", "string", "string"],
-      "slabe_strony": ["string"],
-      "czerwona_flaga": "string lub null",
-      "rekomendacja": "TAK" | "MOZE" | "NIE",
-      "podsumowanie": "string (max 2 zdania)"
-    }
-  ]
+// ── Search limit ──────────────────────────────────────────────
+const SEARCH_LIMIT=5;
+const STORAGE_KEY='znalezieni_searches';
+function getSearchCount(){return parseInt(localStorage.getItem(STORAGE_KEY)||'0');}
+function incrementSearchCount(){const c=getSearchCount()+1;localStorage.setItem(STORAGE_KEY,c);return c;}
+function updateCounter(){
+  const remaining=Math.max(0,SEARCH_LIMIT-getSearchCount());
+  const el=document.getElementById('search-counter');
+  if(!el)return;
+  el.textContent=`Pozostało bezpłatnych analiz: ${remaining} / ${SEARCH_LIMIT}`;
+  el.style.color=remaining<=1?'var(--red-text)':'#bbb';
 }
+updateCounter();
 
-Zasady:
-- Bądź bezwzględnie szczery — HR potrzebuje prawdy, nie dyplomacji
-- Wynik 8-10 tylko dla naprawdę silnych dopasowań
-- Czerwona flaga: luki w CV, zbyt częste zmiany pracy, brak kluczowych wymagań
-- Sortuj od najwyższego wyniku do najniższego
-- Odpowiadaj wyłącznie w JSON, zero dodatkowego tekstu`;
-
+// ── Demo data ─────────────────────────────────────────────────
 const DEMO_JOBS=[
-  {title:"Senior HR Business Partner",company:"TechCorp Polska · Warszawa · IT · 150 os.",salary:"12 000 – 16 000 PLN brutto",tag:"Mid-size IT",
-   text:`STANOWISKO: Senior HR Business Partner\nFIRMA: TechCorp Polska Sp. z o.o. (150 pracowników, branża IT)\n\nWYMAGANIA OBOWIĄZKOWE:\n- Min. 5 lat doświadczenia w HR\n- Doświadczenie w środowisku IT/tech\n- Znajomość polskiego prawa pracy\n- Angielski B2+\n- Doświadczenie w rekrutacji technicznej\n\nWYMAGANIA MILE WIDZIANE:\n- Certyfikat SHRM lub CIPD\n- Doświadczenie z systemami ATS (Workday, SAP SuccessFactors)\n- Znajomość metodologii Agile/Scrum\n\nZAKRES OBOWIĄZKÓW:\n- Budowanie strategii HR dla działów technicznych\n- Rekrutacja specjalistów IT (Java, Python, DevOps)\n- Prowadzenie procesów onboardingowych i offboardingowych\n- Wsparcie menedżerów w kwestiach pracowniczych i prawnych\n- Raportowanie wskaźników HR do zarządu\n\nWYNAGRODZENIE: 12 000 – 16 000 PLN brutto`},
-  {title:"Head of People Operations",company:"ScaleUp.io · Kraków/Remote · SaaS B2B · 80 os.",salary:"18 000 – 24 000 PLN + ESOP",tag:"Startup seria A",
-   text:`STANOWISKO: Head of People Operations\nFIRMA: ScaleUp.io Sp. z o.o. (80 pracowników, SaaS B2B, seria A — 8 mln EUR)\nLOKALIZACJA: Kraków / praca zdalna\n\nO FIRMIE:\nScaleUp.io to szybko rosnąca platforma SaaS dla e-commerce. Planujemy podwoić zespół do końca 2025 r. Szukamy pierwszej osoby odpowiedzialnej za budowanie działu People.\n\nCZEGO OCZEKUJEMY:\n- Min. 7 lat doświadczenia w HR, w tym min. 3 lata na stanowisku HRBP lub wyżej\n- Doświadczenie w skalowaniu firmy technologicznej (od 50 do 200+ os.)\n- Umiejętność budowania procesów HR od podstaw (greenfield)\n- Doświadczenie z rekrutacją inżynierów i product managerów\n- Angielski C1 — część zespołu pracuje z Amsterdamu\n\nCO BĘDZIESZ ROBIĆ:\n- Zbudujesz dział People od podstaw (docelowo 3–4 osoby)\n- Zaprojektujesz kompletne procesy HR (onboarding, performance, L&D)\n- Będziesz partnerem dla CEO i CTO w strategii talentów\n- Poprowadzisz rekrutacje na stanowiska Senior i C-level\n\nOFERUJEMY:\n- Equity (ESOP) — udział w sukcesie firmy\n- Pełna elastyczność — praca zdalna lub biuro w Krakowie\n- Budżet szkoleniowy bez górnego limitu\n\nWYNAGRODZENIE: 18 000 – 24 000 PLN brutto lub ekwiwalent B2B + ESOP`},
+  {title:"Senior HR Business Partner",company:"TechCorp Polska · Kraków · IT · 150 os.",salary:"12 000 – 16 000 PLN brutto",tag:"Branża IT",
+   text:`STANOWISKO: Senior HR Business Partner\nFIRMA: TechCorp Polska Sp. z o.o. (150 pracowników, branża IT)\n\nWYMAGANIA OBOWIĄZKOWE:\n- Min. 5 lat doświadczenia w HR\n- Doświadczenie w środowisku IT/tech\n- Znajomość polskiego prawa pracy\n- Angielski B2+\n- Doświadczenie w rekrutacji technicznej\n\nWYMAGANIA MILE WIDZIANE:\n- Certyfikat SHRM lub CIPD\n- Doświadczenie z systemami ATS (Workday, SAP)\n- Znajomość metodologii Agile/Scrum\n\nZAKRES OBOWIĄZKÓW:\n- Budowanie strategii HR dla działów technicznych\n- Rekrutacja specjalistów IT (Java, Python, DevOps)\n- Prowadzenie procesów onboardingowych\n- Wsparcie managerów w kwestiach pracowniczych\n\nWYNAGRODZENIE: 12 000 - 16 000 PLN brutto`},
+  {title:"Head of People Operations",company:"ScaleUp.io · Kraków / Remote · SaaS · 80 os.",salary:"18 000 – 24 000 PLN brutto",tag:"Scale-up",
+   text:`STANOWISKO: Head of People Operations\nFIRMA: ScaleUp.io Sp. z o.o. (80 pracowników, SaaS B2B)\n\nCZEGO OCZEKUJEMY:\n- Min. 7 lat doświadczenia w HR, w tym min. 3 lata HRBP\n- Doświadczenie w skalowaniu firmy tech (50 do 200+ os.)\n- Umiejętność budowania procesów HR od podstaw\n- Angielski C1\n\nCO BĘDZIESZ ROBIĆ:\n- Zbudujesz dział People od podstaw\n- Zaprojektujesz procesy HR\n- Partner dla CEO i CTO\n- Rekrutacje Senior i C-level\n\nWYNAGRODZENIE: 18 000 – 24 000 PLN brutto lub B2B + ESOP`},
   {title:"Rekruter IT / TA Specialist",company:"SoftHouse Polska · Wrocław · Software house · 300 os.",salary:"8 000 – 12 000 PLN brutto",tag:"Software house",
-   text:`STANOWISKO: Rekruter IT / Talent Acquisition Specialist\nFIRMA: SoftHouse Polska Sp. z o.o. (300 pracowników, software house)\nLOKALIZACJA: Wrocław (hybrid) lub pełny remote\n\nOPIS STANOWISKA:\nDołącz do naszego 5-osobowego zespołu TA i pomóż nam znaleźć najlepszych inżynierów dla klientów z UK, DACH i Skandynawii.\n\nWYMAGANIA OBOWIĄZKOWE:\n- Min. 2 lata doświadczenia w rekrutacji IT\n- Praktyczna znajomość Boolean search i LinkedIn Recruiter\n- Orientacja w technologiach: Java, .NET, Python, React, DevOps\n- Angielski B2 — rozmowy z kandydatami z zagranicy\n- Umiejętność prowadzenia 15–20 procesów jednocześnie\n\nWYMAGANIA MILE WIDZIANE:\n- Doświadczenie z systemem Greenhouse lub podobnym ATS\n- Znajomość rynku nearshore (Ukraina, Rumunia, Czechy)\n\nZAKRES OBOWIĄZKÓW:\n- Sourcing i selekcja kandydatów na role Mid/Senior/Lead (Java, .NET, Python, React)\n- Prowadzenie rozmów kwalifikacyjnych kompetencyjnych\n- Współpraca z tech leaderami przy ocenie kandydatów\n- Raportowanie: time-to-hire, source of hire, offer acceptance rate\n\nWYNAGRODZENIE: 8 000 – 12 000 PLN brutto (UoP) lub 85 – 130 PLN/h netto (B2B)`},
+   text:`STANOWISKO: Rekruter IT / Talent Acquisition Specialist\nFIRMA: SoftHouse Polska Sp. z o.o. (300 pracowników)\n\nWYMAGANIA:\n- Min. 2 lata doświadczenia w rekrutacji IT\n- Boolean search i LinkedIn Recruiter\n- Orientacja w Java, .NET, Python, React, DevOps\n- Angielski B2\n- 15–20 procesów jednocześnie\n\nWYNAGRODZENIE: 8 000 – 12 000 PLN brutto lub 85–130 PLN/h netto B2B`},
 ];
 
 const DEMO_CVS=[
-  {name:"Anna Kowalska",content:`Anna Kowalska | anna.kowalska@email.pl | +48 600 123 456\n\nDOŚWIADCZENIE:\n2019-obecnie: HR Business Partner, SoftwareMill (200 os.) — rekrutacja IT, onboarding, Workday\n2016-2019: HR Specialist, Comarch SA — rekrutacja techniczna, prawo pracy\n2014-2016: Recruiter IT, Hays Poland — headhunting IT\n\nWYKSZTAŁCENIE: Mgr Zarządzanie Zasobami Ludzkimi, UJ Kraków 2014\nCERTYFIKATY: SHRM-CP 2020, certyfikat prawa pracy 2018\nJĘZYKI: Angielski C1, Niemiecki B1\nUMIEJĘTNOŚCI: Workday, SAP SuccessFactors, Agile HR`},
-  {name:"Marek Wiśniewski",content:`Marek Wiśniewski | marek.w@gmail.com | +48 501 987 654\n\nDOŚWIADCZENIE:\n2021-obecnie: HR Manager, sklep internetowy (12 os.) — ogólny HR\n2020-2021: przerwa w karierze (opieka nad rodzicem)\n2018-2020: HR Assistant, fabryka mebli\n2015-2018: sprzedawca w sklepie AGD\n\nWYKSZTAŁCENIE: Licencjat Administracja, WSIZ 2015\nJĘZYKI: Angielski A2\nUMIEJĘTNOŚCI: Excel, kadry-płace`},
-  {name:"Katarzyna Nowak",content:`Katarzyna Nowak | k.nowak@outlook.com\n\nDOŚWIADCZENIE:\n2020-obecnie: HRBP, Allegro (3000 os.) — partnering dla działu tech 400 os., rekrutacja senior devów\n2017-2020: HR Specialist, OLX Group — EB, rekrutacja IT\n2015-2017: Junior Recruiter, Antal\n\nWYKSZTAŁCENIE: Psychologia, Uniwersytet Warszawski 2015\nCERTYFIKATY: CIPD Level 5, Scrum Master\nJĘZYKI: Angielski C2, Rosyjski B2\nPROJEKTY: Wdrożenie Workday dla 3000 pracowników 2022`},
-  {name:"Piotr Zając",content:`Piotr Zając | piotr.zajac@email.pl\n\nDOŚWIADCZENIE:\n2022-obecnie: HR BP, startup fintech (40 os.)\n2021-2022: HR BP, inna firma (zwolniony po 8 mies.)\n2020-2021: HR BP, kolejna firma (odszedł po 6 mies.)\n2019-2020: HR Specialist\n2018-2019: HR Assistant\n\nWYKSZTAŁCENIE: Zarządzanie, SGH 2018\nJĘZYKI: Angielski B2\nUMIEJĘTNOŚCI: rekrutacja, onboarding`},
-  {name:"Monika Dąbrowska",content:`Monika Dąbrowska | monika.dabrowska@gmail.com\n\nDOŚWIADCZENIE:\n2018-obecnie: Head of People, DocPlanner (500+ os., 13 krajów)\n— Zbudowanie działu HR od 3 do 15 osób\n— Wdrożenie globalnej strategii rekrutacyjnej\n— Rekrutacja 200+ specjalistów IT rocznie\n2015-2018: Senior HRBP, Naspers/OLX\n\nWYKSZTAŁCENIE: MBA, Koźmińskiego 2017; Psychologia UW 2013\nCERTYFIKATY: SHRM-SCP, ICF Coach\nJĘZYKI: Angielski C2, Hiszpański B1\nOSIĄGNIĘCIA: Top HR Leader 2023 (Forbes Polska)`},
-  {name:"Tomasz Lewandowski",content:`Tomasz Lewandowski\n\nDOŚWIADCZENIE:\n2023-obecnie: HR w firmie IT (świeży start)\n2020-2023: nauczyciel w szkole podstawowej\n2018-2020: praca za granicą (Holandia, różne prace fizyczne)\n\nWYKSZTAŁCENIE: Historia, UWr 2018\nJĘZYKI: Angielski B1, Holenderski podstawowy\nZAINTERESOWANIA: HR, ludzie, rozwój`},
-  {name:"Aleksandra Wójcik",content:`Aleksandra Wójcik | aleksandra.wojcik@email.pl | +48 690 456 789\n\nDOŚWIADCZENIE:\n2019-obecnie: HR Business Partner, CD Projekt Red (1000+ os.)\n— Partner HR dla działu R&D (300 programistów)\n— Rekrutacja senior game devów i architektów silnika\n— Programy retencji dla kluczowych pracowników\n2016-2019: HR Specialist, Sabre Polska\n2014-2016: IT Recruiter, Michael Page\n\nWYKSZTAŁCENIE: Socjologia, UW 2014\nJĘZYKI: Angielski C1, Czeski komunikatywny\nUMIEJĘTNOŚCI: Workday, Greenhouse ATS, Agile, OKR`},
-  {name:"Rafał Kowalczyk",content:`Rafał Kowalczyk | rafal.k@email.pl\n\nDOŚWIADCZENIE:\n2015-2024: Właściciel agencji rekrutacyjnej IT (ITalent Agency)\n— 8 lat rekrutacji wyłącznie IT\n— 400+ projektów dla firm tech\n— Specjalizacja: Java, Python, DevOps, Data Science\n2012-2015: IT Recruiter, Luxoft\n\nWYKSZTAŁCENIE: Informatyka (nieukończone), PW; Psychologia, SWPS 2014\nJĘZYKI: Angielski C1\nUWAGA: Przechodzi na etat po sprzedaży agencji — szuka stabilności`},
-  {name:"Joanna Kamińska",content:`Joanna Kamińska | joanna.kaminska@gmail.com\n\nDOŚWIADCZENIE:\n2021-2023: HR Generalist, POLMEAT SA (firma produkcyjna, brak doświadczenia IT)\n2019-2021: Specjalista ds. kadr i płac, biuro rachunkowe\n2017-2019: urlop macierzyński x2\n2015-2017: Asystent ds. kadr, Urząd Gminy Pabianice\n\nWYKSZTAŁCENIE: Prawo pracy, UKSW 2016\nCERTYFIKATY: Kurs kadrowo-płacowy (SKwP), Kurs HR Generalista\nJĘZYKI: Angielski B1\nUMIEJĘTNOŚCI: Płatnik, Enova, Symfonia Kadry`},
-  {name:"Bartosz Szymański",content:`Bartosz Szymański | b.szymanski@email.pl | +48 502 111 222\n\nDOŚWIADCZENIE:\n2020-obecnie: People Partner, Revolut Polska (fintech, 300 os.)\n— Partner dla engineering teams (150 devów)\n— Rekrutacja: 80 inżynierów w 2023 r.\n— Wdrożenie Workday + integracja z Jira HR\n2018-2020: HRBP, ING Tech Poland\n2016-2018: HR Specialist, Accenture\n\nWYKSZTAŁCENIE: Zarządzanie, SGH 2016\nJĘZYKI: Angielski C1, Ukraiński natywny\nCERTYFIKATY: SAP SuccessFactors, Agile HR Practitioner`},
+  {name:"Anna Kowalska",content:`Anna Kowalska | anna.kowalska@email.pl | +48 600 123 456\n\nDOŚWIADCZENIE:\n2019-obecnie: HR Business Partner, SoftwareMill (200 os.) — rekrutacja IT, onboarding, Workday\n2016-2019: HR Specialist, Comarch SA\n2014-2016: Recruiter IT, Hays Poland\n\nWYKSZTAŁCENIE: Mgr ZZL, UJ Kraków 2014\nCERTYFIKATY: SHRM-CP 2020\nJĘZYKI: Angielski C1, Niemiecki B1\nUMIEJĘTNOŚCI: Workday, SAP SuccessFactors, Agile HR`},
+  {name:"Marek Wiśniewski",content:`Marek Wiśniewski | marek.w@gmail.com\n\nDOŚWIADCZENIE:\n2021-obecnie: HR Manager, sklep internetowy (12 os.)\n2020-2021: przerwa w karierze\n2018-2020: HR Assistant, fabryka mebli\n2015-2018: sprzedawca AGD\n\nWYKSZTAŁCENIE: Licencjat Administracja 2015\nJĘZYKI: Angielski A2`},
+  {name:"Katarzyna Nowak",content:`Katarzyna Nowak | k.nowak@outlook.com\n\nDOŚWIADCZENIE:\n2020-obecnie: HRBP, Allegro (3000 os.) — dział tech 400 os.\n2017-2020: HR Specialist, OLX Group\n2015-2017: Junior Recruiter, Antal\n\nWYKSZTAŁCENIE: Psychologia UW 2015\nCERTYFIKATY: CIPD Level 5, Scrum Master\nJĘZYKI: Angielski C2`},
+  {name:"Piotr Zając",content:`Piotr Zając\n\nDOŚWIADCZENIE:\n2022-obecnie: HR BP, startup fintech (40 os.)\n2021-2022: HR BP (zwolniony po 8 mies.)\n2020-2021: HR BP (odszedł po 6 mies.)\n2019-2020: HR Specialist\n\nWYKSZTAŁCENIE: Zarządzanie SGH 2018\nJĘZYKI: Angielski B2`},
+  {name:"Monika Dąbrowska",content:`Monika Dąbrowska | monika.dabrowska@gmail.com\n\nDOŚWIADCZENIE:\n2018-obecnie: Head of People, DocPlanner (500+ os., 13 krajów)\n— Dział HR od 3 do 15 osób\n— Rekrutacja 200+ specjalistów IT rocznie\n2015-2018: Senior HRBP, OLX\n\nWYKSZTAŁCENIE: MBA Koźmiński 2017; Psychologia UW 2013\nCERTYFIKATY: SHRM-SCP, ICF Coach\nJĘZYKI: Angielski C2`},
+  {name:"Tomasz Lewandowski",content:`Tomasz Lewandowski\n\nDOŚWIADCZENIE:\n2023-obecnie: HR w firmie IT (świeży start)\n2020-2023: nauczyciel szkoły podstawowej\n2018-2020: praca fizyczna Holandia\n\nWYKSZTAŁCENIE: Historia UWr 2018\nJĘZYKI: Angielski B1`},
+  {name:"Aleksandra Wójcik",content:`Aleksandra Wójcik | aleksandra.wojcik@email.pl\n\nDOŚWIADCZENIE:\n2019-obecnie: HR Business Partner, CD Projekt Red (1000+ os.)\n— R&D partner (300 programistów)\n2016-2019: HR Specialist, Sabre Polska\n2014-2016: IT Recruiter, Michael Page\n\nWYKSZTAŁCENIE: Socjologia UW 2014\nJĘZYKI: Angielski C1\nUMIEJĘTNOŚCI: Workday, Greenhouse, Agile`},
+  {name:"Rafał Kowalczyk",content:`Rafał Kowalczyk | rafal.k@email.pl\n\nDOŚWIADCZENIE:\n2015-2024: Właściciel agencji rekrutacyjnej IT\n— 400+ projektów, specjalizacja Java/Python/DevOps\n2012-2015: IT Recruiter, Luxoft\n\nWYKSZTAŁCENIE: Psychologia SWPS 2014\nJĘZYKI: Angielski C1`},
+  {name:"Joanna Kamińska",content:`Joanna Kamińska | joanna.kaminska@gmail.com\n\nDOŚWIADCZENIE:\n2021-2023: HR Generalist, firma produkcyjna (bez IT)\n2019-2021: Specjalista kadr i płac\n2017-2019: urlopy macierzyńskie\n\nWYKSZTAŁCENIE: Prawo pracy UKSW 2016\nJĘZYKI: Angielski B1`},
+  {name:"Bartosz Szymański",content:`Bartosz Szymański | b.szymanski@email.pl\n\nDOŚWIADCZENIE:\n2020-obecnie: People Partner, Revolut Polska (300 os.)\n— Engineering teams partner (150 devów)\n— 80 inżynierów zatrudnionych w 2023\n2018-2020: HRBP, ING Tech Poland\n2016-2018: HR Specialist, Accenture\n\nWYKSZTAŁCENIE: Zarządzanie SGH 2016\nJĘZYKI: Angielski C1\nCERTYFIKATY: SAP SuccessFactors, Agile HR`},
 ];
 
-// Build UI
+// ── UI build ──────────────────────────────────────────────────
 let uploadedCvTexts=[];
 
 const jobsGrid=document.getElementById('demo-jobs-grid');
@@ -256,21 +238,25 @@ DEMO_CVS.forEach((cv,i)=>{
   demoCvContainer.appendChild(d);
 });
 
-const sk=sessionStorage.getItem('anthropic_api_key');
-if(sk) document.getElementById('api-key-input').value=sk;
-
+// ── Tabs ──────────────────────────────────────────────────────
 function switchTab(tab){
   document.getElementById('tab-tool').style.display=tab==='tool'?'':'none';
   document.getElementById('tab-data').style.display=tab==='data'?'':'none';
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(i===0&&tab==='tool')||(i===1&&tab==='data')));
 }
 
-function saveApiKey(){
-  const k=document.getElementById('api-key-input').value.trim();
-  if(k){sessionStorage.setItem('anthropic_api_key',k);const s=document.getElementById('key-saved');s.style.display='inline';setTimeout(()=>s.style.display='none',2000);}
+// ── Clear buttons ─────────────────────────────────────────────
+function clearJob(){
+  document.getElementById('job-desc').value='';
+  document.getElementById('job-file-chip').innerHTML='';
 }
-function getApiKey(){return document.getElementById('api-key-input').value.trim()||sessionStorage.getItem('anthropic_api_key')||'';}
+function clearCVs(){
+  document.getElementById('cvs-text').value='';
+  document.getElementById('uploaded-files').innerHTML='';
+  uploadedCvTexts=[];
+}
 
+// ── Load test data ────────────────────────────────────────────
 function loadTestData(idx=0){
   document.querySelectorAll('.demo-job-card').forEach((c,i)=>c.classList.toggle('selected',i===idx));
   document.getElementById('job-desc').value=DEMO_JOBS[idx].text;
@@ -278,6 +264,7 @@ function loadTestData(idx=0){
   switchTab('tool');
 }
 
+// ── PDF extraction ────────────────────────────────────────────
 async function extractPdfText(file){
   const ab=await file.arrayBuffer();
   const pdf=await pdfjsLib.getDocument({data:ab}).promise;
@@ -289,10 +276,9 @@ async function extractPdfText(file){
   }
   return text;
 }
-
 function sid(n){return n.replace(/[^a-zA-Z0-9]/g,'_');}
 
-// Job PDF upload
+// ── Job PDF upload ────────────────────────────────────────────
 const jobZone=document.getElementById('job-upload-zone');
 const jobInput=document.getElementById('job-file-input');
 jobZone.addEventListener('dragover',e=>{e.preventDefault();jobZone.classList.add('drag-over');});
@@ -306,13 +292,12 @@ async function handleJobFile(file){
   try{
     const text=await extractPdfText(file);
     document.getElementById('job-desc').value=text.trim();
-    cc.innerHTML=`<div class="file-chip done"><span>📋</span><span class="fn">${file.name}</span><span class="fs">✓ Załadowano</span><button class="fr" onclick="clearJobFile()">✕</button></div>`;
+    cc.innerHTML=`<div class="file-chip done"><span>📋</span><span class="fn">${file.name}</span><span class="fs">✓ Załadowano</span><button class="fr" onclick="clearJob()">✕</button></div>`;
   }catch{cc.innerHTML=`<div class="file-chip error"><span>📋</span><span class="fn">${file.name}</span><span class="fs">✗ Błąd odczytu</span></div>`;}
   jobInput.value='';
 }
-function clearJobFile(){document.getElementById('job-file-chip').innerHTML='';document.getElementById('job-desc').value='';}
 
-// CV PDF upload
+// ── CV PDF upload ─────────────────────────────────────────────
 const cvZone=document.getElementById('cv-upload-zone');
 const cvInput=document.getElementById('cv-file-input');
 cvZone.addEventListener('dragover',e=>{e.preventDefault();cvZone.classList.add('drag-over');});
@@ -348,6 +333,7 @@ function appendCvText(name,text){
   ta.value=(ex?ex+'\n\n':'')+`--- CV: ${name} ---\n`+text.trim();
 }
 
+// ── Main screen function ──────────────────────────────────────
 async function screenCVs(){
   const jobDesc=document.getElementById('job-desc').value.trim();
   const cvsText=document.getElementById('cvs-text').value.trim();
@@ -355,28 +341,55 @@ async function screenCVs(){
   const loadingBox=document.getElementById('loading-box');
   const resultsSection=document.getElementById('results-section');
   const screenBtn=document.getElementById('screen-btn');
-  errorBox.style.display='none';resultsSection.style.display='none';
-  if(!jobDesc||!cvsText){errorBox.textContent='Wklej ogłoszenie i CV kandydatów.';errorBox.style.display='block';return;}
-  const apiKey=getApiKey();
-  if(!apiKey){errorBox.textContent='Wpisz klucz API Anthropic powyżej.';errorBox.style.display='block';return;}
-  screenBtn.disabled=true;screenBtn.textContent='Analizuję kandydatów…';
+
+  errorBox.style.display='none';
+  resultsSection.style.display='none';
+
+  if(!jobDesc||!cvsText){
+    errorBox.textContent='Wklej ogłoszenie i CV kandydatów.';
+    errorBox.style.display='block';
+    return;
+  }
+
+  if(getSearchCount()>=SEARCH_LIMIT){
+    errorBox.textContent='Wykorzystałeś limit 5 bezpłatnych analiz. Napisz na kontakt@znalezieni.pl aby kontynuować.';
+    errorBox.style.display='block';
+    return;
+  }
+
+  screenBtn.disabled=true;
+  screenBtn.textContent='Analizuję…';
   loadingBox.style.display='block';
+
   try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    const resp=await fetch('/api/screen',{
       method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:4000,system:SYSTEM_PROMPT,messages:[{role:'user',content:`OGŁOSZENIE O PRACĘ:\n${jobDesc}\n\n========\n\nCV KANDYDATÓW:\n${cvsText}`}]}),
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({jobDesc,cvsText}),
     });
-    if(!resp.ok){const err=await resp.json().catch(()=>({}));throw new Error(err?.error?.message||`HTTP ${resp.status}`);}
+
+    if(!resp.ok){
+      const err=await resp.json().catch(()=>({}));
+      if(resp.status===429)throw new Error(err.error||'Limit analiz wyczerpany. Napisz na kontakt@znalezieni.pl.');
+      throw new Error(err.error||`Błąd serwera: HTTP ${resp.status}`);
+    }
+
     const data=await resp.json();
-    const text=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
-    const parsed=JSON.parse(text.replace(/```json|```/g,'').trim());
-    renderResults(parsed.kandydaci||[]);
+    incrementSearchCount();
+    updateCounter();
+    renderResults(data.kandydaci||[]);
+
   }catch(err){
-    errorBox.textContent=`Błąd: ${err.message||'Sprawdź dane i spróbuj ponownie.'}`;errorBox.style.display='block';
-  }finally{screenBtn.disabled=false;screenBtn.textContent='Przeanalizuj CV →';loadingBox.style.display='none';}
+    errorBox.textContent=`Błąd: ${err.message||'Sprawdź dane i spróbuj ponownie.'}`;
+    errorBox.style.display='block';
+  }finally{
+    screenBtn.disabled=false;
+    screenBtn.textContent='Przeanalizuj CV →';
+    loadingBox.style.display='none';
+  }
 }
 
+// ── Render ────────────────────────────────────────────────────
 function recColor(rec){
   if(rec==='TAK') return{bg:'var(--green-bg)',color:'var(--green-text)',border:'var(--green-border)'};
   if(rec==='MOZE')return{bg:'var(--amber-bg)',color:'var(--amber-text)',border:'var(--amber-border)'};
