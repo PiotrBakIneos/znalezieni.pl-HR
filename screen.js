@@ -23,7 +23,7 @@ Zasady:
 - Sortuj od najwyższego wyniku do najniższego
 - Odpowiadaj wyłącznie w JSON, zero dodatkowego tekstu`;
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { jobDesc, cvsText } = req.body || {};
@@ -31,8 +31,7 @@ export default async function handler(req, res) {
   if (jobDesc.length > 15000 || cvsText.length > 80000) return res.status(400).json({ error: 'Za dużo danych wejściowych.' });
 
   // IP-based rate limit via Upstash Redis (optional but recommended)
-  // If you set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN in Vercel env vars,
-  // this will block users who bypass the client-side limit.
+  // Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN in Vercel env vars to enable.
   if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
     const ip = (req.headers['x-forwarded-for'] || 'unknown').split(',')[0].trim();
     const key = `znalezieni_ip:${ip}`;
@@ -66,7 +65,7 @@ export default async function handler(req, res) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-4-5',
         max_tokens: 4000,
         system: SYSTEM_PROMPT,
         messages: [{
