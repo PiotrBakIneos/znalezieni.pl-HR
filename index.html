@@ -177,7 +177,7 @@
       <div class="tool-card" onclick="showTool('questions')">
         <span class="tool-icon">🛡️</span>
         <div class="tool-name">Pytania do kandydata</div>
-        <div class="tool-desc">Generuje pytania screeningowe pozbawione biasów płci i wieku — na podstawie ogłoszenia o pracę. Każde pytanie z wyjaśnieniem dlaczego jest neutralne.</div>
+        <div class="tool-desc">Wgraj ogłoszenie o pracę — otrzymasz 10 pytań screeningowych dostosowanych do stanowiska, każde z wyjaśnieniem dlaczego jest neutralne i kompetencyjne.</div>
         <div class="tool-tags">
           <span class="tool-tag">Bez biasów płci</span>
           <span class="tool-tag">Bez biasów wieku</span>
@@ -259,21 +259,45 @@
   <div id="view-questions" class="tool-view">
     <div class="tool-header">
       <h2>🛡️ Pytania do kandydata</h2>
-      <p>Generuje pytania screeningowe pozbawione biasów płci i wieku</p>
+      <p>Wygeneruj pytania screeningowe dostosowane do ogłoszenia o pracę</p>
     </div>
 
-    <div style="margin-bottom:16px">
-      <div class="field-header">
-        <label class="field-label">Ogłoszenie o pracę</label>
-        <button class="btn-clear" onclick="clearQJob()">✕ Wyczyść</button>
+    <!-- Sample job descriptions -->
+    <div class="info-card" style="margin-bottom:16px">
+      <h3 style="font-size:.82rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:12px">Przykładowe ogłoszenia — kliknij aby załadować</h3>
+      <div class="demo-jobs-grid" id="q-demo-jobs-grid" style="grid-template-columns:repeat(3,1fr)"></div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:16px">
+      <!-- Job description column -->
+      <div>
+        <div class="field-header">
+          <label class="field-label">Ogłoszenie o pracę</label>
+          <button class="btn-clear" onclick="clearQJob()">✕ Wyczyść</button>
+        </div>
+        <div class="upload-zone" id="q-upload-zone" onclick="document.getElementById('q-file-input').click()">
+          <div class="upload-icon">📋</div>
+          <div class="upload-text"><strong>Kliknij lub przeciągnij PDF z ogłoszeniem</strong></div>
+        </div>
+        <input type="file" id="q-file-input" accept=".pdf" style="display:none">
+        <div id="q-file-chip"></div>
+        <textarea id="q-job-desc" placeholder="…lub wklej treść ogłoszenia — stanowisko, wymagania, zakres obowiązków..." style="height:200px"></textarea>
       </div>
-      <div class="upload-zone" id="q-upload-zone" onclick="document.getElementById('q-file-input').click()">
-        <div class="upload-icon">📋</div>
-        <div class="upload-text"><strong>Kliknij lub przeciągnij PDF z ogłoszeniem</strong></div>
+
+      <!-- CV upload column -->
+      <div>
+        <div class="field-header">
+          <label class="field-label">CV kandydata (opcjonalnie)</label>
+          <button class="btn-clear" onclick="clearQCv()">✕ Wyczyść</button>
+        </div>
+        <div class="upload-zone" id="q-cv-upload-zone" onclick="document.getElementById('q-cv-file-input').click()">
+          <div class="upload-icon">📄</div>
+          <div class="upload-text"><strong>Kliknij lub przeciągnij PDF z CV</strong><br><span style="font-size:.75rem">Pytania zostaną spersonalizowane do kandydata</span></div>
+        </div>
+        <input type="file" id="q-cv-file-input" accept=".pdf" style="display:none">
+        <div id="q-cv-file-chip"></div>
+        <textarea id="q-cv-text" placeholder="…lub wklej CV tekstowo — doświadczenie, umiejętności, wykształcenie..." style="height:160px"></textarea>
       </div>
-      <input type="file" id="q-file-input" accept=".pdf" style="display:none">
-      <div id="q-file-chip"></div>
-      <textarea id="q-job-desc" placeholder="…lub wklej treść ogłoszenia — stanowisko, wymagania, zakres obowiązków..." style="height:260px"></textarea>
     </div>
 
     <div id="q-error-box" class="error-box"></div>
@@ -499,9 +523,54 @@ function exportCSV(){
   const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='wyniki_rekrutacji.csv';a.click();
 }
 
+// ── TOOL 2: Sample job descriptions ──────────────────────────
+const Q_DEMO_JOBS=[
+  {title:"Specjalista ds. Marketingu Cyfrowego",company:"Agencja reklamowa · Warszawa",tag:"Marketing",
+   text:`STANOWISKO: Specjalista ds. Marketingu Cyfrowego\nFIRMA: Agencja reklamowa (50 pracowników)\n\nWYMAGANIA OBOWIĄZKOWE:\n- Min. 2 lata doświadczenia w digital marketingu\n- Znajomość Google Ads, Meta Ads, Google Analytics 4\n- Umiejętność tworzenia raportów i analizy danych\n- Doświadczenie w prowadzeniu kampanii performance\n\nWYMAGANIA MILE WIDZIANE:\n- Certyfikat Google Ads lub Meta Blueprint\n- Znajomość narzędzi SEO (Semrush, Ahrefs)\n- Doświadczenie z e-commerce\n\nZAKRES OBOWIĄZKÓW:\n- Planowanie i realizacja kampanii płatnych\n- Optymalizacja budżetów reklamowych\n- Raportowanie wyników do klientów\n- Testy A/B i analiza konwersji\n\nWYNAGRODZENIE: 6 500–9 000 PLN brutto`},
+  {title:"Główny Księgowy",company:"Firma produkcyjna · Poznań",tag:"Finanse",
+   text:`STANOWISKO: Główny Księgowy\nFIRMA: Przedsiębiorstwo produkcyjne (200 pracowników)\n\nWYMAGANIA OBOWIĄZKOWE:\n- Min. 5 lat doświadczenia w księgowości, w tym 2 lata na stanowisku kierowniczym\n- Wykształcenie wyższe ekonomiczne lub rachunkowe\n- Certyfikat księgowy (minimum II stopień)\n- Biegła znajomość MSSF i Ustawy o rachunkowości\n- Doświadczenie z systemem ERP (SAP, Comarch lub podobny)\n\nWYMAGANIA MILE WIDZIANE:\n- Doświadczenie w firmie produkcyjnej\n- Znajomość konsolidacji sprawozdań finansowych\n\nZAKRES OBOWIĄZKÓW:\n- Nadzór nad całością procesów księgowych\n- Sporządzanie sprawozdań finansowych\n- Kontakt z audytorami i urzędem skarbowym\n- Zarządzanie 4-osobowym zespołem\n\nWYNAGRODZENIE: 11 000–15 000 PLN brutto`},
+  {title:"Kierownik Projektu IT",company:"Integratornia systemów · Kraków · Hybrydowo",tag:"IT / PM",
+   text:`STANOWISKO: Kierownik Projektu IT (Project Manager)\nFIRMA: Firma integratorska (120 pracowników)\n\nWYMAGANIA OBOWIĄZKOWE:\n- Min. 4 lata doświadczenia w zarządzaniu projektami IT\n- Certyfikat PMP, PRINCE2 lub równoważny\n- Doświadczenie z metodykami Agile/Scrum i Waterfall\n- Umiejętność zarządzania budżetem i harmonogramem\n- Angielski B2\n\nWYMAGANIA MILE WIDZIANE:\n- Doświadczenie w projektach wdrożeniowych ERP lub CRM\n- Znajomość narzędzi Jira, Confluence, MS Project\n\nZAKRES OBOWIĄZKÓW:\n- Prowadzenie projektów wdrożeniowych dla klientów B2B\n- Koordynacja zespołów technicznych i biznesowych\n- Zarządzanie ryzykiem i zmianami projektowymi\n- Raportowanie do Zarządu i klienta\n\nWYNAGRODZENIE: 14 000–18 000 PLN brutto lub B2B`},
+  {title:"Pielęgniarka Oddziałowa",company:"Szpital prywatny · Wrocław",tag:"Ochrona zdrowia",
+   text:`STANOWISKO: Pielęgniarka / Pielęgniarz Oddziałowy — Oddział Wewnętrzny\nFIRMA: Prywatna placówka medyczna\n\nWYMAGANIA OBOWIĄZKOWE:\n- Prawo wykonywania zawodu pielęgniarki/pielęgniarza\n- Min. 3 lata doświadczenia klinicznego\n- Znajomość procedur medycznych i standardów JCI\n- Umiejętność pracy w zespole wielodyscyplinarnym\n\nWYMAGANIA MILE WIDZIANE:\n- Specjalizacja z pielęgniarstwa internistycznego\n- Doświadczenie na oddziale wewnętrznym lub intensywnej opieki\n- Znajomość systemu HIS (np. Medicover, AMMS)\n\nZAKRES OBOWIĄZKÓW:\n- Opieka nad pacjentami oddziału wewnętrznego\n- Podawanie leków i realizacja zleceń lekarskich\n- Dokumentowanie stanu pacjentów\n- Współpraca z zespołem leczącym\n\nWYNAGRODZENIE: 6 200–8 500 PLN brutto + dodatki zmianowe`},
+  {title:"Doradca Klienta — Sprzedaż B2B",company:"Firma logistyczna · Gdańsk / Remote",tag:"Sprzedaż",
+   text:`STANOWISKO: Doradca Klienta ds. Sprzedaży B2B\nFIRMA: Operator logistyczny (400 pracowników)\n\nWYMAGANIA OBOWIĄZKOWE:\n- Min. 2 lata doświadczenia w sprzedaży B2B\n- Udokumentowane wyniki sprzedażowe\n- Umiejętność budowania relacji z klientem\n- Znajomość procesu sprzedażowego (prospecting → closing)\n- Prawo jazdy kat. B\n\nWYMAGANIA MILE WIDZIANE:\n- Doświadczenie w branży TSL (transport, spedycja, logistyka)\n- Znajomość systemu CRM (Salesforce, HubSpot)\n- Angielski B1\n\nZAKRES OBOWIĄZKÓW:\n- Pozyskiwanie nowych klientów na usługi logistyczne\n- Przygotowanie ofert i prowadzenie negocjacji\n- Utrzymywanie relacji z istniejącym portfelem klientów\n- Realizacja miesięcznych targetów sprzedażowych\n\nWYNAGRODZENIE: 6 000 PLN podstawa + prowizja (OTE 12 000–16 000 PLN)`},
+];
+
+(function initQDemoJobs(){
+  const grid=document.getElementById('q-demo-jobs-grid');
+  if(!grid)return;
+  Q_DEMO_JOBS.forEach((job,i)=>{
+    const c=document.createElement('div');c.className='demo-job-card';c.id=`qdj-${i}`;
+    c.innerHTML=`<div class="demo-job-title">${job.title}</div><div class="demo-job-company">${job.company}</div><div class="demo-job-tag">${job.tag}</div>`;
+    c.onclick=()=>{
+      document.querySelectorAll('[id^="qdj-"]').forEach((el,j)=>el.classList.toggle('selected',j===i));
+      document.getElementById('q-job-desc').value=job.text;
+    };
+    grid.appendChild(c);
+  });
+})();
+
+// ── Tool 2: CV upload ─────────────────────────────────────────
+const qCvZone=document.getElementById('q-cv-upload-zone');
+const qCvInput=document.getElementById('q-cv-file-input');
+qCvZone.addEventListener('dragover',e=>{e.preventDefault();qCvZone.classList.add('drag-over');});
+qCvZone.addEventListener('dragleave',()=>qCvZone.classList.remove('drag-over'));
+qCvZone.addEventListener('drop',e=>{e.preventDefault();qCvZone.classList.remove('drag-over');const f=Array.from(e.dataTransfer.files).find(f=>f.name.endsWith('.pdf'));if(f)handleQCvFile(f);});
+qCvInput.addEventListener('change',e=>{if(e.target.files[0])handleQCvFile(e.target.files[0]);});
+async function handleQCvFile(file){
+  const cc=document.getElementById('q-cv-file-chip');
+  cc.innerHTML=`<div class="file-chip processing"><span>📄</span><span class="fn">${file.name}</span><span class="fs">🔄 Odczytuję…</span></div>`;
+  try{const text=await extractPdfText(file);document.getElementById('q-cv-text').value=text.trim();cc.innerHTML=`<div class="file-chip done"><span>📄</span><span class="fn">${file.name}</span><span class="fs">✓ Załadowano</span><button class="fr" onclick="clearQCv()">✕</button></div>`;}
+  catch{cc.innerHTML=`<div class="file-chip error"><span>📄</span><span class="fn">${file.name}</span><span class="fs">✗ Błąd</span></div>`;}
+  qCvInput.value='';
+}
+function clearQCv(){document.getElementById('q-cv-text').value='';document.getElementById('q-cv-file-chip').innerHTML='';}
+
 // ── TOOL 2: Generate bias-free questions ──────────────────────
 async function generateQuestions(){
   const jobDesc=document.getElementById('q-job-desc').value.trim();
+  const cvText=document.getElementById('q-cv-text').value.trim();
   const errorBox=document.getElementById('q-error-box');
   const loadingBox=document.getElementById('q-loading-box');
   const resultsSection=document.getElementById('q-results-section');
@@ -511,7 +580,9 @@ async function generateQuestions(){
   if(getCount(KEY_Q)>=LIMIT){errorBox.textContent='Limit 5 bezpłatnych generowań wykorzystany. Napisz na kontakt@znalezieni.pl.';errorBox.style.display='block';return;}
   btn.disabled=true;btn.textContent='Generuję…';loadingBox.style.display='block';
   try{
-    const resp=await fetch('/api/questions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jobDesc})});
+    const body={jobDesc};
+    if(cvText)body.cvText=cvText;
+    const resp=await fetch('/api/questions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!resp.ok){const err=await resp.json().catch(()=>({}));throw new Error(err.error||`HTTP ${resp.status}`);}
     const data=await resp.json();
     incCount(KEY_Q);updateCounter('q-search-counter',KEY_Q);
