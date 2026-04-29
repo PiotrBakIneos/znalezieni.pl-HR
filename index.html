@@ -341,16 +341,16 @@ function showHome(){
 }
 function showTool(tool){
   document.getElementById('view-home').style.display='none';
-  document.getElementById('view-cv').style.display=tool==='cv'?'':'none';
+  document.getElementById('view-cv').style.display=tool==='cv'?'block':'none';
   document.getElementById('view-demo').style.display='none';
-  document.getElementById('view-questions').style.display=tool==='questions'?'':'none';
-  document.getElementById('back-btn').style.display='';
+  document.getElementById('view-questions').style.display=tool==='questions'?'block':'none';
+  document.getElementById('back-btn').style.display='block';
   if(tool==='cv')updateCounter('cv-search-counter',KEY_CV);
   if(tool==='questions')updateCounter('q-search-counter',KEY_Q);
 }
 function showDemoData(){
   document.getElementById('view-cv').style.display='none';
-  document.getElementById('view-demo').style.display='';
+  document.getElementById('view-demo').style.display='block';
 }
 
 // ── Demo data ─────────────────────────────────────────────────
