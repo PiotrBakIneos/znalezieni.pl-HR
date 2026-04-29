@@ -137,6 +137,16 @@
   .btn-load-all{width:100%;padding:14px;background:var(--navy);color:var(--cream);border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;margin-top:8px}
   .btn-load-all:hover{background:#2a2a4e}
 
+  /* ANONYMIZATION */
+  .anon-confirm{background:var(--green-bg);border:1px solid var(--green-border);border-radius:8px;padding:10px 14px;font-size:.8rem;color:var(--green-text);margin-bottom:10px;display:none;line-height:1.6}
+  .anon-confirm strong{font-weight:700}
+  .anon-warning{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;padding:8px 14px;font-size:.78rem;color:var(--amber-text);margin-bottom:8px;display:none}
+  .btn-anon{width:100%;padding:11px 16px;background:#fff;color:#444;border:1.5px dashed var(--blue-border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .2s;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px}
+  .btn-anon:hover:not(:disabled){border-color:var(--navy);color:var(--navy);background:#f8f9ff}
+  .btn-anon:disabled{opacity:.6;cursor:not-allowed}
+  .btn-anon.done{background:var(--green-bg);border-color:var(--green-border);color:var(--green-text)}
+  .anon-spinner{width:14px;height:14px;border:2px solid #cce;border-top-color:#1a56db;border-radius:50%;animation:spin .7s linear infinite;display:none}
+
   @media(max-width:640px){
     .tools-grid{grid-template-columns:1fr}
     .grid-2,.card-body,.stats-row,.demo-jobs-grid{grid-template-columns:1fr;display:flex;flex-direction:column}
@@ -225,6 +235,15 @@
     </div>
 
     <div id="cv-error-box" class="error-box"></div>
+
+    <!-- Anonymization UI -->
+    <div id="anon-confirm" class="anon-confirm"></div>
+    <div id="anon-warning" class="anon-warning">⚠ CV zostało zmodyfikowane po anonimizacji — dane osobowe mogą być widoczne.</div>
+    <button class="btn-anon" id="anon-btn" onclick="anonymizeCVs()">
+      <span id="anon-spinner" class="anon-spinner"></span>
+      <span id="anon-btn-label">🔒 Zanonimizuj CV przed analizą</span>
+    </button>
+
     <div class="btn-row">
       <button class="btn-primary" id="screen-btn" onclick="screenCVs()">Przeanalizuj CV →</button>
       <button class="btn-secondary" onclick="showDemoData()">Dane testowe</button>
@@ -392,6 +411,7 @@ function loadTestData(idx=0){
   document.querySelectorAll('.demo-job-card').forEach((c,i)=>c.classList.toggle('selected',i===idx));
   document.getElementById('job-desc').value=DEMO_JOBS[idx].text;
   document.getElementById('cvs-text').value=DEMO_CVS.map((cv,i)=>`--- CV ${i+1}: ${cv.name} ---\n${cv.content}`).join('\n\n');
+  resetAnonState();
   showTool('cv');
 }
 
@@ -441,7 +461,62 @@ async function handleCvFiles(files){
 }
 function removeCvFile(chipId,name){const chip=document.getElementById('chip-'+chipId);if(chip)chip.remove();uploadedCvTexts=uploadedCvTexts.filter(f=>f.name!==name.replace(/\.pdf$/i,''));}
 function appendCvText(name,text){const ta=document.getElementById('cvs-text');const ex=ta.value.trim();ta.value=(ex?ex+'\n\n':'')+`--- CV: ${name} ---\n`+text.trim();}
-function clearCVs(){document.getElementById('cvs-text').value='';document.getElementById('uploaded-files').innerHTML='';uploadedCvTexts=[];}
+function clearCVs(){document.getElementById('cvs-text').value='';document.getElementById('uploaded-files').innerHTML='';uploadedCvTexts=[];resetAnonState();}
+
+// ── TOOL 1: Anonymization ─────────────────────────────────────
+let anonDone=false;
+
+function resetAnonState(){
+  anonDone=false;
+  const btn=document.getElementById('anon-btn');
+  btn.className='btn-anon';
+  document.getElementById('anon-btn-label').textContent='🔒 Zanonimizuj CV przed analizą';
+  document.getElementById('anon-confirm').style.display='none';
+  document.getElementById('anon-warning').style.display='none';
+}
+
+document.getElementById('cvs-text').addEventListener('input',()=>{
+  if(anonDone){document.getElementById('anon-warning').style.display='block';}
+});
+
+async function anonymizeCVs(){
+  const cvsText=document.getElementById('cvs-text').value.trim();
+  const errorBox=document.getElementById('cv-error-box');
+  const btn=document.getElementById('anon-btn');
+  const spinner=document.getElementById('anon-spinner');
+  const label=document.getElementById('anon-btn-label');
+  errorBox.style.display='none';
+  if(!cvsText){errorBox.textContent='Wklej CV kandydatów przed anonimizacją.';errorBox.style.display='block';return;}
+  btn.disabled=true;spinner.style.display='inline-block';label.textContent='Anonimizuję…';
+  try{
+    const resp=await fetch('/api/anonymize',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cvsText})});
+    if(!resp.ok){const err=await resp.json().catch(()=>({}));throw new Error(err.error||`HTTP ${resp.status}`);}
+    const data=await resp.json();
+    document.getElementById('cvs-text').value=data.anonymizedText;
+    anonDone=true;
+    document.getElementById('anon-warning').style.display='none';
+    // Show summary
+    const u=data.usunieto||{};
+    const parts=[];
+    if(u.imiona)parts.push(`${u.imiona} ${u.imiona===1?'imię':'imiona/nazwiska'}`);
+    if(u.emaile)parts.push(`${u.emaile} ${u.emaile===1?'email':'emaile'}`);
+    if(u.telefony)parts.push(`${u.telefony} ${u.telefony===1?'numer telefonu':'numery telefonu'}`);
+    if(u.adresy)parts.push(`${u.adresy} ${u.adresy===1?'adres':'adresy'}`);
+    const confirm=document.getElementById('anon-confirm');
+    confirm.innerHTML=`<strong>✓ Zanonimizowano pomyślnie.</strong> Usunięto: ${parts.length?parts.join(', '):'brak wykrytych danych osobowych'}.`;
+    confirm.style.display='block';
+    // Change button to trigger analysis
+    btn.className='btn-anon done';
+    label.textContent='✓ Zanonimizowane — analizuj →';
+    btn.onclick=screenCVs;
+    btn.disabled=false;spinner.style.display='none';
+    // Auto-run screening
+    screenCVs();
+  }catch(err){
+    errorBox.textContent=`Błąd anonimizacji: ${err.message}`;errorBox.style.display='block';
+    btn.disabled=false;spinner.style.display='none';label.textContent='🔒 Zanonimizuj CV przed analizą';
+  }
+}
 
 // ── Job PDF (Tool 2) ──────────────────────────────────────────
 const qZone=document.getElementById('q-upload-zone');
