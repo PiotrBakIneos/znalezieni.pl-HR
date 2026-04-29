@@ -3,33 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>znalezieni.pl — Screening Kandydatów</title>
+<title>znalezieni.pl — Narzędzia HR</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
   :root {
     --navy:#1a1a2e; --gold:#EF9F27; --cream:#F5E6C8; --bg:#FAFAF8;
-    --card:#ffffff; --border:#E8E4DC; --text:#1a1a2e; --muted:#888;
+    --card:#ffffff; --border:#E8E4DC; --text:#1a1a2e;
     --green-bg:#EAF3DE; --green-text:#3B6D11; --green-border:#97C459;
     --amber-bg:#FAEEDA; --amber-text:#854F0B; --amber-border:#EF9F27;
     --red-bg:#FCEBEB; --red-text:#A32D2D; --red-border:#F09595;
+    --blue-bg:#E8F0FE; --blue-text:#1a56db; --blue-border:#93B4F8;
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
+  /* HEADER */
   .header{background:var(--navy);padding:1.25rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.3)}
-  .logo{font-family:'Playfair Display',Georgia,serif;font-size:1.6rem;color:var(--cream)}
+  .logo{font-family:'Playfair Display',Georgia,serif;font-size:1.6rem;color:var(--cream);cursor:pointer}
   .logo span{color:var(--gold)}
-  .tabs{display:flex;gap:6px}
-  .tab-btn{padding:7px 18px;border-radius:6px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;transition:all .2s}
-  .tab-btn.active{background:var(--gold);color:var(--navy);font-weight:700}
-  .tab-btn:not(.active){background:rgba(255,255,255,.08);color:#bbb}
-  .tab-btn:not(.active):hover{background:rgba(255,255,255,.15);color:#ddd}
+  .back-btn{background:rgba(255,255,255,.08);border:none;color:#bbb;padding:7px 16px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.82rem;cursor:pointer;transition:all .2s;display:none}
+  .back-btn:hover{background:rgba(255,255,255,.15);color:#fff}
 
   .main{max-width:980px;margin:0 auto;padding:2rem 1.5rem 4rem}
-  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
 
+  /* HOME */
+  .home-hero{text-align:center;padding:3rem 0 2.5rem}
+  .home-title{font-family:'Playfair Display',serif;font-size:2.4rem;color:var(--navy);margin-bottom:12px}
+  .home-title span{color:var(--gold)}
+  .home-sub{font-size:1rem;color:#888;max-width:480px;margin:0 auto}
+
+  .tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:2.5rem}
+  .tool-card{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:2rem 1.75rem;cursor:pointer;transition:all .25s;text-align:left;position:relative;overflow:hidden}
+  .tool-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--gold);opacity:0;transition:opacity .25s}
+  .tool-card:hover{border-color:var(--gold);box-shadow:0 8px 32px rgba(239,159,39,.15);transform:translateY(-2px)}
+  .tool-card:hover::before{opacity:1}
+  .tool-icon{font-size:2.8rem;margin-bottom:1rem;display:block}
+  .tool-name{font-family:'Playfair Display',serif;font-size:1.35rem;color:var(--navy);margin-bottom:8px}
+  .tool-desc{font-size:.88rem;color:#666;line-height:1.6;margin-bottom:1.25rem}
+  .tool-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.5rem}
+  .tool-tag{font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:20px;background:var(--amber-bg);color:var(--amber-text)}
+  .tool-cta{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;font-weight:600;color:var(--navy);border-bottom:1.5px solid var(--gold);padding-bottom:1px}
+
+  /* SHARED TOOL STYLES */
+  .tool-view{display:none}
+  .tool-header{margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border)}
+  .tool-header h2{font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--navy);margin-bottom:4px}
+  .tool-header p{font-size:.85rem;color:#888}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
   .field-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
   label.field-label{font-size:.72rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#666}
   .btn-clear{background:none;border:none;font-size:.72rem;color:#bbb;cursor:pointer;padding:2px 8px;border-radius:4px;font-family:'DM Sans',sans-serif;transition:all .15s}
@@ -48,7 +71,7 @@
   .file-chip{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:.8rem}
   .file-chip .fn{flex:1;color:var(--navy);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .file-chip .fs{font-size:.72rem;color:#888;white-space:nowrap}
-  .file-chip .fr{background:none;border:none;cursor:pointer;color:#ccc;font-size:1rem;padding:0 2px;transition:color .15s}
+  .file-chip .fr{background:none;border:none;cursor:pointer;color:#ccc;font-size:1rem;padding:0 2px}
   .file-chip .fr:hover{color:var(--red-text)}
   .file-chip.processing{border-color:var(--amber-border)}
   .file-chip.done{border-color:var(--green-border)}
@@ -64,12 +87,12 @@
   .btn-row{display:flex;gap:10px;margin-bottom:1rem}
 
   .search-counter{text-align:right;font-size:.75rem;color:#bbb;margin-bottom:1rem}
-
   .error-box{background:var(--red-bg);color:var(--red-text);padding:10px 16px;border-radius:8px;font-size:.82rem;margin-bottom:12px;display:none}
   .loading-box{text-align:center;padding:3rem;color:#888;display:none}
   .loading-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
   @keyframes spin{to{transform:rotate(360deg)}}
 
+  /* TOOL 1 - CV SCREENING RESULTS */
   .results-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
   .results-title{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--navy)}
   .stats-row{display:flex;gap:12px;margin-bottom:1.5rem}
@@ -89,38 +112,89 @@
   .strength-item,.weakness-item{font-size:.82rem;color:#444;padding:2px 0;line-height:1.5}
   .red-flag{margin-top:10px;background:var(--red-bg);border:1px solid var(--red-border);border-radius:6px;padding:7px 12px;font-size:.78rem;color:var(--red-text);font-weight:600}
 
+  /* TOOL 2 - BIAS-FREE QUESTIONS RESULTS */
+  .questions-list{display:flex;flex-direction:column;gap:12px;margin-top:1.5rem}
+  .question-card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--gold);border-radius:12px;padding:1.25rem 1.5rem}
+  .question-num{font-size:.72rem;font-weight:700;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+  .question-text{font-family:'Playfair Display',serif;font-size:1rem;color:var(--navy);line-height:1.5;margin-bottom:10px}
+  .question-meta{display:flex;gap:8px;flex-wrap:wrap}
+  .q-tag{font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:20px}
+  .q-tag-bias{background:var(--red-bg);color:var(--red-text)}
+  .q-tag-why{background:var(--blue-bg);color:var(--blue-text);font-weight:400}
+
+  /* DEMO DATA TAB */
   .info-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
   .info-card h3{font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:14px;color:var(--navy)}
   .demo-jobs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px}
   .demo-job-card{border:1.5px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s;background:#fff}
-  .demo-job-card:hover{border-color:var(--gold);background:#FFF9EE}
-  .demo-job-card.selected{border-color:var(--gold);background:#FFF9EE;box-shadow:0 0 0 2px #EF9F2730}
+  .demo-job-card:hover,.demo-job-card.selected{border-color:var(--gold);background:#FFF9EE}
   .demo-job-title{font-weight:700;font-size:.88rem;color:var(--navy);margin-bottom:4px}
   .demo-job-company{font-size:.78rem;color:#888;margin-bottom:8px}
   .demo-job-tag{display:inline-block;background:var(--amber-bg);color:var(--amber-text);border-radius:4px;padding:2px 8px;font-size:.72rem;font-weight:600}
   .cv-item{background:#F8F7F4;border-radius:8px;padding:12px 14px;margin-bottom:8px}
   .cv-item-name{font-weight:700;font-size:.88rem;margin-bottom:5px;color:var(--navy)}
   .cv-item pre{font-size:.75rem;color:#666;white-space:pre-wrap;font-family:'Courier New',monospace;line-height:1.6}
-  .btn-load-all{width:100%;padding:14px;background:var(--navy);color:var(--cream);border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .2s}
+  .btn-load-all{width:100%;padding:14px;background:var(--navy);color:var(--cream);border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;margin-top:8px}
   .btn-load-all:hover{background:#2a2a4e}
 
-  @media(max-width:640px){.grid-2,.card-body,.stats-row,.demo-jobs-grid{grid-template-columns:1fr;display:flex;flex-direction:column}.header{flex-direction:column;gap:12px;align-items:flex-start}}
+  @media(max-width:640px){
+    .tools-grid{grid-template-columns:1fr}
+    .grid-2,.card-body,.stats-row,.demo-jobs-grid{grid-template-columns:1fr;display:flex;flex-direction:column}
+    .header{flex-direction:column;gap:12px;align-items:flex-start}
+    .home-title{font-size:1.8rem}
+  }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <div class="logo">znalezieni<span>.pl</span></div>
-  <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('tool')">Narzędzie</button>
-    <button class="tab-btn" onclick="switchTab('data')">Dane testowe</button>
-  </div>
+  <div class="logo" onclick="showHome()">znalezieni<span>.pl</span></div>
+  <button class="back-btn" id="back-btn" onclick="showHome()">← Wróć do narzędzi</button>
 </div>
 
 <div class="main">
 
-  <!-- TOOL TAB -->
-  <div id="tab-tool">
+  <!-- HOME -->
+  <div id="view-home">
+    <div class="home-hero">
+      <div class="home-title">Narzędzia dla <span>rekrutacji</span></div>
+      <div class="home-sub">Dwa narzędzia które oszczędzają godziny pracy. Bez rejestracji, bez subskrypcji — zacznij teraz.</div>
+    </div>
+
+    <div class="tools-grid">
+      <div class="tool-card" onclick="showTool('cv')">
+        <span class="tool-icon">🎯</span>
+        <div class="tool-name">Dopasuj kandydata</div>
+        <div class="tool-desc">Wgraj ogłoszenie i CV kandydatów — otrzymasz ranking z oceną punktową, mocnymi i słabymi stronami oraz czerwonymi flagami dla każdego kandydata.</div>
+        <div class="tool-tags">
+          <span class="tool-tag">Ranking kandydatów</span>
+          <span class="tool-tag">Czerwone flagi</span>
+          <span class="tool-tag">Eksport CSV</span>
+        </div>
+        <div class="tool-cta">Otwórz narzędzie →</div>
+      </div>
+
+      <div class="tool-card" onclick="showTool('questions')">
+        <span class="tool-icon">🛡️</span>
+        <div class="tool-name">Pytania do kandydata</div>
+        <div class="tool-desc">Generuje pytania screeningowe pozbawione biasów płci i wieku — na podstawie ogłoszenia o pracę. Każde pytanie z wyjaśnieniem dlaczego jest neutralne.</div>
+        <div class="tool-tags">
+          <span class="tool-tag">Bez biasów płci</span>
+          <span class="tool-tag">Bez biasów wieku</span>
+          <span class="tool-tag">Gotowe do użycia</span>
+        </div>
+        <div class="tool-cta">Otwórz narzędzie →</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOL 1: CV SCREENING -->
+  <div id="view-cv" class="tool-view">
+    <div class="tool-header">
+      <h2>🎯 Dopasuj kandydata</h2>
+      <p>Wgraj ogłoszenie i CV — otrzymasz ranking z oceną i analizą każdego kandydata</p>
+    </div>
+
     <div class="grid-2">
       <div>
         <div class="field-header">
@@ -150,26 +224,29 @@
       </div>
     </div>
 
-    <div id="error-box" class="error-box"></div>
+    <div id="cv-error-box" class="error-box"></div>
     <div class="btn-row">
       <button class="btn-primary" id="screen-btn" onclick="screenCVs()">Przeanalizuj CV →</button>
-      <button class="btn-secondary" onclick="switchTab('data')">Dane testowe</button>
+      <button class="btn-secondary" onclick="showDemoData()">Dane testowe</button>
     </div>
-    <div id="search-counter" class="search-counter"></div>
-    <div class="loading-box" id="loading-box">
+    <div id="cv-search-counter" class="search-counter"></div>
+    <div class="loading-box" id="cv-loading-box">
       <div class="loading-spinner"></div>
       <div style="font-size:.95rem;color:#555">Trwa analiza kandydatów…</div>
       <div style="font-size:.8rem;color:#aaa;margin-top:6px">To zajmie około 15–30 sekund</div>
     </div>
-    <div id="results-section" style="display:none"></div>
+    <div id="cv-results-section" style="display:none"></div>
   </div>
 
-  <!-- DATA TAB -->
-  <div id="tab-data" style="display:none">
+  <!-- TOOL 1: DEMO DATA -->
+  <div id="view-demo" class="tool-view">
+    <div class="tool-header">
+      <h2>Dane testowe</h2>
+      <p>Kliknij ogłoszenie aby załadować je razem z CV do narzędzia</p>
+    </div>
     <div class="info-card">
-      <h3>3 testowe ogłoszenia o pracę — kliknij aby załadować</h3>
+      <h3>3 testowe ogłoszenia o pracę</h3>
       <div class="demo-jobs-grid" id="demo-jobs-grid"></div>
-      <div style="font-size:.8rem;color:#888">Kliknij ogłoszenie, aby załadować je do narzędzia razem ze wszystkimi 10 CV</div>
     </div>
     <div class="info-card">
       <h3>10 testowych CV kandydatów</h3>
@@ -177,60 +254,109 @@
     </div>
     <button class="btn-load-all" onclick="loadTestData(0)">Załaduj ogłoszenie #1 + wszystkie CV →</button>
   </div>
-</div>
+
+  <!-- TOOL 2: BIAS-FREE QUESTIONS -->
+  <div id="view-questions" class="tool-view">
+    <div class="tool-header">
+      <h2>🛡️ Pytania do kandydata</h2>
+      <p>Generuje pytania screeningowe pozbawione biasów płci i wieku</p>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <div class="field-header">
+        <label class="field-label">Ogłoszenie o pracę</label>
+        <button class="btn-clear" onclick="clearQJob()">✕ Wyczyść</button>
+      </div>
+      <div class="upload-zone" id="q-upload-zone" onclick="document.getElementById('q-file-input').click()">
+        <div class="upload-icon">📋</div>
+        <div class="upload-text"><strong>Kliknij lub przeciągnij PDF z ogłoszeniem</strong></div>
+      </div>
+      <input type="file" id="q-file-input" accept=".pdf" style="display:none">
+      <div id="q-file-chip"></div>
+      <textarea id="q-job-desc" placeholder="…lub wklej treść ogłoszenia — stanowisko, wymagania, zakres obowiązków..." style="height:260px"></textarea>
+    </div>
+
+    <div id="q-error-box" class="error-box"></div>
+    <div class="btn-row">
+      <button class="btn-primary" id="q-btn" onclick="generateQuestions()">Generuj pytania →</button>
+    </div>
+    <div id="q-search-counter" class="search-counter"></div>
+    <div class="loading-box" id="q-loading-box">
+      <div class="loading-spinner"></div>
+      <div style="font-size:.95rem;color:#555">Trwa generowanie pytań…</div>
+      <div style="font-size:.8rem;color:#aaa;margin-top:6px">To zajmie około 15–20 sekund</div>
+    </div>
+    <div id="q-results-section" style="display:none"></div>
+  </div>
+
+</div><!-- /main -->
 
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-// ── Search limit ──────────────────────────────────────────────
-const SEARCH_LIMIT=5;
-const STORAGE_KEY='znalezieni_searches';
-function getSearchCount(){return parseInt(localStorage.getItem(STORAGE_KEY)||'0');}
-function incrementSearchCount(){const c=getSearchCount()+1;localStorage.setItem(STORAGE_KEY,c);return c;}
-function updateCounter(){
-  const remaining=Math.max(0,SEARCH_LIMIT-getSearchCount());
-  const el=document.getElementById('search-counter');
-  if(!el)return;
-  el.textContent=`Pozostało bezpłatnych analiz: ${remaining} / ${SEARCH_LIMIT}`;
+// ── Search limits ─────────────────────────────────────────────
+const LIMIT=5;
+const KEY_CV='znalezieni_cv';
+const KEY_Q='znalezieni_q';
+function getCount(k){return parseInt(localStorage.getItem(k)||'0');}
+function incCount(k){const c=getCount(k)+1;localStorage.setItem(k,c);return c;}
+function updateCounter(elId,key){
+  const remaining=Math.max(0,LIMIT-getCount(key));
+  const el=document.getElementById(elId);if(!el)return;
+  el.textContent=`Pozostało bezpłatnych analiz: ${remaining} / ${LIMIT}`;
   el.style.color=remaining<=1?'var(--red-text)':'#bbb';
 }
-updateCounter();
+
+// ── Navigation ────────────────────────────────────────────────
+function showHome(){
+  document.getElementById('view-home').style.display='';
+  document.getElementById('view-cv').style.display='none';
+  document.getElementById('view-demo').style.display='none';
+  document.getElementById('view-questions').style.display='none';
+  document.getElementById('back-btn').style.display='none';
+}
+function showTool(tool){
+  document.getElementById('view-home').style.display='none';
+  document.getElementById('view-cv').style.display=tool==='cv'?'':'none';
+  document.getElementById('view-demo').style.display='none';
+  document.getElementById('view-questions').style.display=tool==='questions'?'':'none';
+  document.getElementById('back-btn').style.display='';
+  if(tool==='cv')updateCounter('cv-search-counter',KEY_CV);
+  if(tool==='questions')updateCounter('q-search-counter',KEY_Q);
+}
+function showDemoData(){
+  document.getElementById('view-cv').style.display='none';
+  document.getElementById('view-demo').style.display='';
+}
 
 // ── Demo data ─────────────────────────────────────────────────
 const DEMO_JOBS=[
-  {title:"Senior HR Business Partner",company:"TechCorp Polska · Kraków · IT · 150 os.",salary:"12 000 – 16 000 PLN brutto",tag:"Branża IT",
-   text:`STANOWISKO: Senior HR Business Partner\nFIRMA: TechCorp Polska Sp. z o.o. (150 pracowników, branża IT)\n\nWYMAGANIA OBOWIĄZKOWE:\n- Min. 5 lat doświadczenia w HR\n- Doświadczenie w środowisku IT/tech\n- Znajomość polskiego prawa pracy\n- Angielski B2+\n- Doświadczenie w rekrutacji technicznej\n\nWYMAGANIA MILE WIDZIANE:\n- Certyfikat SHRM lub CIPD\n- Doświadczenie z systemami ATS (Workday, SAP)\n- Znajomość metodologii Agile/Scrum\n\nZAKRES OBOWIĄZKÓW:\n- Budowanie strategii HR dla działów technicznych\n- Rekrutacja specjalistów IT (Java, Python, DevOps)\n- Prowadzenie procesów onboardingowych\n- Wsparcie managerów w kwestiach pracowniczych\n\nWYNAGRODZENIE: 12 000 - 16 000 PLN brutto`},
-  {title:"Head of People Operations",company:"ScaleUp.io · Kraków / Remote · SaaS · 80 os.",salary:"18 000 – 24 000 PLN brutto",tag:"Scale-up",
-   text:`STANOWISKO: Head of People Operations\nFIRMA: ScaleUp.io Sp. z o.o. (80 pracowników, SaaS B2B)\n\nCZEGO OCZEKUJEMY:\n- Min. 7 lat doświadczenia w HR, w tym min. 3 lata HRBP\n- Doświadczenie w skalowaniu firmy tech (50 do 200+ os.)\n- Umiejętność budowania procesów HR od podstaw\n- Angielski C1\n\nCO BĘDZIESZ ROBIĆ:\n- Zbudujesz dział People od podstaw\n- Zaprojektujesz procesy HR\n- Partner dla CEO i CTO\n- Rekrutacje Senior i C-level\n\nWYNAGRODZENIE: 18 000 – 24 000 PLN brutto lub B2B + ESOP`},
-  {title:"Rekruter IT / TA Specialist",company:"SoftHouse Polska · Wrocław · Software house · 300 os.",salary:"8 000 – 12 000 PLN brutto",tag:"Software house",
-   text:`STANOWISKO: Rekruter IT / Talent Acquisition Specialist\nFIRMA: SoftHouse Polska Sp. z o.o. (300 pracowników)\n\nWYMAGANIA:\n- Min. 2 lata doświadczenia w rekrutacji IT\n- Boolean search i LinkedIn Recruiter\n- Orientacja w Java, .NET, Python, React, DevOps\n- Angielski B2\n- 15–20 procesów jednocześnie\n\nWYNAGRODZENIE: 8 000 – 12 000 PLN brutto lub 85–130 PLN/h netto B2B`},
+  {title:"Senior HR Business Partner",company:"TechCorp Polska · IT · 150 os.",salary:"12 000–16 000 PLN",tag:"Branża IT",
+   text:`STANOWISKO: Senior HR Business Partner\nFIRMA: TechCorp Polska Sp. z o.o. (150 pracowników, branża IT)\n\nWYMAGANIA OBOWIĄZKOWE:\n- Min. 5 lat doświadczenia w HR\n- Doświadczenie w środowisku IT/tech\n- Znajomość polskiego prawa pracy\n- Angielski B2+\n- Doświadczenie w rekrutacji technicznej\n\nWYMAGANIA MILE WIDZIANE:\n- Certyfikat SHRM lub CIPD\n- Doświadczenie z systemami ATS (Workday, SAP)\n- Znajomość metodologii Agile/Scrum\n\nZAKRES OBOWIĄZKÓW:\n- Budowanie strategii HR dla działów technicznych\n- Rekrutacja specjalistów IT\n- Prowadzenie procesów onboardingowych\n- Wsparcie managerów w kwestiach pracowniczych\n\nWYNAGRODZENIE: 12 000–16 000 PLN brutto`},
+  {title:"Head of People Operations",company:"ScaleUp.io · Remote · SaaS · 80 os.",salary:"18 000–24 000 PLN",tag:"Scale-up",
+   text:`STANOWISKO: Head of People Operations\nFIRMA: ScaleUp.io Sp. z o.o. (80 pracowników, SaaS B2B)\n\nCZEGO OCZEKUJEMY:\n- Min. 7 lat doświadczenia w HR, w tym 3 lata HRBP\n- Doświadczenie w skalowaniu firmy tech\n- Angielski C1\n\nCO BĘDZIESZ ROBIĆ:\n- Zbudujesz dział People od podstaw\n- Zaprojektujesz procesy HR\n- Partner dla CEO i CTO\n\nWYNAGRODZENIE: 18 000–24 000 PLN lub B2B + ESOP`},
+  {title:"Rekruter IT / TA Specialist",company:"SoftHouse Polska · Wrocław · 300 os.",salary:"8 000–12 000 PLN",tag:"Software house",
+   text:`STANOWISKO: Rekruter IT / Talent Acquisition Specialist\nFIRMA: SoftHouse Polska (300 pracowników)\n\nWYMAGANIA:\n- Min. 2 lata w rekrutacji IT\n- Boolean search i LinkedIn Recruiter\n- Java, .NET, Python, React, DevOps\n- Angielski B2\n\nWYNAGRODZENIE: 8 000–12 000 PLN lub 85–130 PLN/h B2B`},
 ];
-
 const DEMO_CVS=[
-  {name:"Anna Kowalska",content:`Anna Kowalska | anna.kowalska@email.pl | +48 600 123 456\n\nDOŚWIADCZENIE:\n2019-obecnie: HR Business Partner, SoftwareMill (200 os.) — rekrutacja IT, onboarding, Workday\n2016-2019: HR Specialist, Comarch SA\n2014-2016: Recruiter IT, Hays Poland\n\nWYKSZTAŁCENIE: Mgr ZZL, UJ Kraków 2014\nCERTYFIKATY: SHRM-CP 2020\nJĘZYKI: Angielski C1, Niemiecki B1\nUMIEJĘTNOŚCI: Workday, SAP SuccessFactors, Agile HR`},
-  {name:"Marek Wiśniewski",content:`Marek Wiśniewski | marek.w@gmail.com\n\nDOŚWIADCZENIE:\n2021-obecnie: HR Manager, sklep internetowy (12 os.)\n2020-2021: przerwa w karierze\n2018-2020: HR Assistant, fabryka mebli\n2015-2018: sprzedawca AGD\n\nWYKSZTAŁCENIE: Licencjat Administracja 2015\nJĘZYKI: Angielski A2`},
-  {name:"Katarzyna Nowak",content:`Katarzyna Nowak | k.nowak@outlook.com\n\nDOŚWIADCZENIE:\n2020-obecnie: HRBP, Allegro (3000 os.) — dział tech 400 os.\n2017-2020: HR Specialist, OLX Group\n2015-2017: Junior Recruiter, Antal\n\nWYKSZTAŁCENIE: Psychologia UW 2015\nCERTYFIKATY: CIPD Level 5, Scrum Master\nJĘZYKI: Angielski C2`},
-  {name:"Piotr Zając",content:`Piotr Zając\n\nDOŚWIADCZENIE:\n2022-obecnie: HR BP, startup fintech (40 os.)\n2021-2022: HR BP (zwolniony po 8 mies.)\n2020-2021: HR BP (odszedł po 6 mies.)\n2019-2020: HR Specialist\n\nWYKSZTAŁCENIE: Zarządzanie SGH 2018\nJĘZYKI: Angielski B2`},
-  {name:"Monika Dąbrowska",content:`Monika Dąbrowska | monika.dabrowska@gmail.com\n\nDOŚWIADCZENIE:\n2018-obecnie: Head of People, DocPlanner (500+ os., 13 krajów)\n— Dział HR od 3 do 15 osób\n— Rekrutacja 200+ specjalistów IT rocznie\n2015-2018: Senior HRBP, OLX\n\nWYKSZTAŁCENIE: MBA Koźmiński 2017; Psychologia UW 2013\nCERTYFIKATY: SHRM-SCP, ICF Coach\nJĘZYKI: Angielski C2`},
-  {name:"Tomasz Lewandowski",content:`Tomasz Lewandowski\n\nDOŚWIADCZENIE:\n2023-obecnie: HR w firmie IT (świeży start)\n2020-2023: nauczyciel szkoły podstawowej\n2018-2020: praca fizyczna Holandia\n\nWYKSZTAŁCENIE: Historia UWr 2018\nJĘZYKI: Angielski B1`},
-  {name:"Aleksandra Wójcik",content:`Aleksandra Wójcik | aleksandra.wojcik@email.pl\n\nDOŚWIADCZENIE:\n2019-obecnie: HR Business Partner, CD Projekt Red (1000+ os.)\n— R&D partner (300 programistów)\n2016-2019: HR Specialist, Sabre Polska\n2014-2016: IT Recruiter, Michael Page\n\nWYKSZTAŁCENIE: Socjologia UW 2014\nJĘZYKI: Angielski C1\nUMIEJĘTNOŚCI: Workday, Greenhouse, Agile`},
-  {name:"Rafał Kowalczyk",content:`Rafał Kowalczyk | rafal.k@email.pl\n\nDOŚWIADCZENIE:\n2015-2024: Właściciel agencji rekrutacyjnej IT\n— 400+ projektów, specjalizacja Java/Python/DevOps\n2012-2015: IT Recruiter, Luxoft\n\nWYKSZTAŁCENIE: Psychologia SWPS 2014\nJĘZYKI: Angielski C1`},
-  {name:"Joanna Kamińska",content:`Joanna Kamińska | joanna.kaminska@gmail.com\n\nDOŚWIADCZENIE:\n2021-2023: HR Generalist, firma produkcyjna (bez IT)\n2019-2021: Specjalista kadr i płac\n2017-2019: urlopy macierzyńskie\n\nWYKSZTAŁCENIE: Prawo pracy UKSW 2016\nJĘZYKI: Angielski B1`},
-  {name:"Bartosz Szymański",content:`Bartosz Szymański | b.szymanski@email.pl\n\nDOŚWIADCZENIE:\n2020-obecnie: People Partner, Revolut Polska (300 os.)\n— Engineering teams partner (150 devów)\n— 80 inżynierów zatrudnionych w 2023\n2018-2020: HRBP, ING Tech Poland\n2016-2018: HR Specialist, Accenture\n\nWYKSZTAŁCENIE: Zarządzanie SGH 2016\nJĘZYKI: Angielski C1\nCERTYFIKATY: SAP SuccessFactors, Agile HR`},
+  {name:"Anna Kowalska",content:`Anna Kowalska | anna.kowalska@email.pl\nDOŚWIADCZENIE:\n2019-obecnie: HR BP, SoftwareMill (200 os.) — rekrutacja IT, Workday\n2016-2019: HR Specialist, Comarch SA\n2014-2016: Recruiter IT, Hays Poland\nWYKSZTAŁCENIE: Mgr ZZL, UJ 2014\nCERTYFIKATY: SHRM-CP 2020\nJĘZYKI: Angielski C1`},
+  {name:"Marek Wiśniewski",content:`Marek Wiśniewski | marek.w@gmail.com\nDOŚWIADCZENIE:\n2021-obecnie: HR Manager, sklep (12 os.)\n2020-2021: przerwa w karierze\n2018-2020: HR Assistant, fabryka\nWYKSZTAŁCENIE: Licencjat Administracja 2015\nJĘZYKI: Angielski A2`},
+  {name:"Katarzyna Nowak",content:`Katarzyna Nowak | k.nowak@outlook.com\nDOŚWIADCZENIE:\n2020-obecnie: HRBP, Allegro (3000 os.) — dział tech 400 os.\n2017-2020: HR Specialist, OLX Group\nWYKSZTAŁCENIE: Psychologia UW 2015\nCERTYFIKATY: CIPD Level 5, Scrum Master\nJĘZYKI: Angielski C2`},
+  {name:"Piotr Zając",content:`Piotr Zając\nDOŚWIADCZENIE:\n2022-obecnie: HR BP, fintech (40 os.)\n2021-2022: HR BP (zwolniony po 8 mies.)\n2020-2021: HR BP (odszedł po 6 mies.)\nWYKSZTAŁCENIE: Zarządzanie SGH 2018\nJĘZYKI: Angielski B2`},
+  {name:"Monika Dąbrowska",content:`Monika Dąbrowska | monika.dabrowska@gmail.com\nDOŚWIADCZENIE:\n2018-obecnie: Head of People, DocPlanner (500+ os., 13 krajów)\n2015-2018: Senior HRBP, OLX\nWYKSZTAŁCENIE: MBA Koźmiński 2017; Psychologia UW 2013\nCERTYFIKATY: SHRM-SCP, ICF Coach\nJĘZYKI: Angielski C2`},
+  {name:"Tomasz Lewandowski",content:`Tomasz Lewandowski\nDOŚWIADCZENIE:\n2023-obecnie: HR w firmie IT (świeży)\n2020-2023: nauczyciel szkoły podstawowej\n2018-2020: praca fizyczna Holandia\nWYKSZTAŁCENIE: Historia UWr 2018\nJĘZYKI: Angielski B1`},
+  {name:"Aleksandra Wójcik",content:`Aleksandra Wójcik | aleksandra.wojcik@email.pl\nDOŚWIADCZENIE:\n2019-obecnie: HR BP, CD Projekt Red (1000+ os.) — R&D 300 devów\n2016-2019: HR Specialist, Sabre Polska\nWYKSZTAŁCENIE: Socjologia UW 2014\nJĘZYKI: Angielski C1\nUMIEJĘTNOŚCI: Workday, Greenhouse, Agile`},
+  {name:"Rafał Kowalczyk",content:`Rafał Kowalczyk | rafal.k@email.pl\nDOŚWIADCZENIE:\n2015-2024: Właściciel agencji IT, 400+ projektów\n2012-2015: IT Recruiter, Luxoft\nWYKSZTAŁCENIE: Psychologia SWPS 2014\nJĘZYKI: Angielski C1`},
+  {name:"Joanna Kamińska",content:`Joanna Kamińska | joanna.kaminska@gmail.com\nDOŚWIADCZENIE:\n2021-2023: HR Generalist, firma produkcyjna (bez IT)\n2019-2021: Specjalista kadr i płac\n2017-2019: urlopy macierzyńskie\nWYKSZTAŁCENIE: Prawo pracy UKSW 2016\nJĘZYKI: Angielski B1`},
+  {name:"Bartosz Szymański",content:`Bartosz Szymański | b.szymanski@email.pl\nDOŚWIADCZENIE:\n2020-obecnie: People Partner, Revolut Polska (300 os.) — 150 devów\n2018-2020: HRBP, ING Tech Poland\n2016-2018: HR Specialist, Accenture\nWYKSZTAŁCENIE: Zarządzanie SGH 2016\nJĘZYKI: Angielski C1\nCERTYFIKATY: SAP SuccessFactors, Agile HR`},
 ];
-
-// ── UI build ──────────────────────────────────────────────────
-let uploadedCvTexts=[];
 
 const jobsGrid=document.getElementById('demo-jobs-grid');
 DEMO_JOBS.forEach((job,i)=>{
-  const c=document.createElement('div');
-  c.className='demo-job-card';c.id=`djob-${i}`;
+  const c=document.createElement('div');c.className='demo-job-card';c.id=`djob-${i}`;
   c.innerHTML=`<div class="demo-job-title">${job.title}</div><div class="demo-job-company">${job.company}</div><div class="demo-job-tag">${job.tag}</div><div style="font-size:.78rem;color:var(--green-text);margin-top:6px;font-weight:600">${job.salary}</div>`;
-  c.onclick=()=>loadTestData(i);
-  jobsGrid.appendChild(c);
+  c.onclick=()=>loadTestData(i);jobsGrid.appendChild(c);
 });
-
 const demoCvContainer=document.getElementById('demo-cvs');
 DEMO_CVS.forEach((cv,i)=>{
   const d=document.createElement('div');d.className='cv-item';
@@ -238,30 +364,11 @@ DEMO_CVS.forEach((cv,i)=>{
   demoCvContainer.appendChild(d);
 });
 
-// ── Tabs ──────────────────────────────────────────────────────
-function switchTab(tab){
-  document.getElementById('tab-tool').style.display=tab==='tool'?'':'none';
-  document.getElementById('tab-data').style.display=tab==='data'?'':'none';
-  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(i===0&&tab==='tool')||(i===1&&tab==='data')));
-}
-
-// ── Clear buttons ─────────────────────────────────────────────
-function clearJob(){
-  document.getElementById('job-desc').value='';
-  document.getElementById('job-file-chip').innerHTML='';
-}
-function clearCVs(){
-  document.getElementById('cvs-text').value='';
-  document.getElementById('uploaded-files').innerHTML='';
-  uploadedCvTexts=[];
-}
-
-// ── Load test data ────────────────────────────────────────────
 function loadTestData(idx=0){
   document.querySelectorAll('.demo-job-card').forEach((c,i)=>c.classList.toggle('selected',i===idx));
   document.getElementById('job-desc').value=DEMO_JOBS[idx].text;
   document.getElementById('cvs-text').value=DEMO_CVS.map((cv,i)=>`--- CV ${i+1}: ${cv.name} ---\n${cv.content}`).join('\n\n');
-  switchTab('tool');
+  showTool('cv');
 }
 
 // ── PDF extraction ────────────────────────────────────────────
@@ -269,137 +376,96 @@ async function extractPdfText(file){
   const ab=await file.arrayBuffer();
   const pdf=await pdfjsLib.getDocument({data:ab}).promise;
   let text='';
-  for(let i=1;i<=pdf.numPages;i++){
-    const page=await pdf.getPage(i);
-    const content=await page.getTextContent();
-    text+=content.items.map(it=>it.str).join(' ')+'\n';
-  }
+  for(let i=1;i<=pdf.numPages;i++){const page=await pdf.getPage(i);const content=await page.getTextContent();text+=content.items.map(it=>it.str).join(' ')+'\n';}
   return text;
 }
 function sid(n){return n.replace(/[^a-zA-Z0-9]/g,'_');}
 
-// ── Job PDF upload ────────────────────────────────────────────
+// ── Job PDF (Tool 1) ──────────────────────────────────────────
 const jobZone=document.getElementById('job-upload-zone');
 const jobInput=document.getElementById('job-file-input');
 jobZone.addEventListener('dragover',e=>{e.preventDefault();jobZone.classList.add('drag-over');});
 jobZone.addEventListener('dragleave',()=>jobZone.classList.remove('drag-over'));
 jobZone.addEventListener('drop',e=>{e.preventDefault();jobZone.classList.remove('drag-over');const f=Array.from(e.dataTransfer.files).find(f=>f.name.endsWith('.pdf'));if(f)handleJobFile(f);});
 jobInput.addEventListener('change',e=>{if(e.target.files[0])handleJobFile(e.target.files[0]);});
-
 async function handleJobFile(file){
   const cc=document.getElementById('job-file-chip');
   cc.innerHTML=`<div class="file-chip processing"><span>📋</span><span class="fn">${file.name}</span><span class="fs">🔄 Odczytuję…</span></div>`;
-  try{
-    const text=await extractPdfText(file);
-    document.getElementById('job-desc').value=text.trim();
-    cc.innerHTML=`<div class="file-chip done"><span>📋</span><span class="fn">${file.name}</span><span class="fs">✓ Załadowano</span><button class="fr" onclick="clearJob()">✕</button></div>`;
-  }catch{cc.innerHTML=`<div class="file-chip error"><span>📋</span><span class="fn">${file.name}</span><span class="fs">✗ Błąd odczytu</span></div>`;}
+  try{const text=await extractPdfText(file);document.getElementById('job-desc').value=text.trim();cc.innerHTML=`<div class="file-chip done"><span>📋</span><span class="fn">${file.name}</span><span class="fs">✓ Załadowano</span><button class="fr" onclick="clearJob()">✕</button></div>`;}
+  catch{cc.innerHTML=`<div class="file-chip error"><span>📋</span><span class="fn">${file.name}</span><span class="fs">✗ Błąd</span></div>`;}
   jobInput.value='';
 }
+function clearJob(){document.getElementById('job-desc').value='';document.getElementById('job-file-chip').innerHTML='';}
 
 // ── CV PDF upload ─────────────────────────────────────────────
+let uploadedCvTexts=[];
 const cvZone=document.getElementById('cv-upload-zone');
 const cvInput=document.getElementById('cv-file-input');
 cvZone.addEventListener('dragover',e=>{e.preventDefault();cvZone.classList.add('drag-over');});
 cvZone.addEventListener('dragleave',()=>cvZone.classList.remove('drag-over'));
 cvZone.addEventListener('drop',e=>{e.preventDefault();cvZone.classList.remove('drag-over');handleCvFiles(Array.from(e.dataTransfer.files).filter(f=>f.name.endsWith('.pdf')));});
 cvInput.addEventListener('change',e=>handleCvFiles(Array.from(e.target.files)));
-
 async function handleCvFiles(files){
   for(const file of files){
-    const id='chip-'+sid(file.name);
-    const container=document.getElementById('uploaded-files');
-    const chip=document.createElement('div');
-    chip.id=id;chip.className='file-chip processing';
+    const id='chip-'+sid(file.name);const container=document.getElementById('uploaded-files');
+    const chip=document.createElement('div');chip.id=id;chip.className='file-chip processing';
     chip.innerHTML=`<span>📄</span><span class="fn" title="${file.name}">${file.name}</span><span class="fs">🔄 Odczytuję…</span><button class="fr" onclick="removeCvFile('${sid(file.name)}','${file.name.replace(/'/g,"\\'")}')">✕</button>`;
     container.appendChild(chip);
-    try{
-      const text=await extractPdfText(file);
-      chip.className='file-chip done';chip.querySelector('.fs').textContent='✓ Gotowy';
-      const sn=file.name.replace(/\.pdf$/i,'');
-      uploadedCvTexts.push({name:sn,text});
-      appendCvText(sn,text);
-    }catch{chip.className='file-chip error';chip.querySelector('.fs').textContent='✗ Błąd';}
-  }
-  cvInput.value='';
+    try{const text=await extractPdfText(file);chip.className='file-chip done';chip.querySelector('.fs').textContent='✓ Gotowy';const sn=file.name.replace(/\.pdf$/i,'');uploadedCvTexts.push({name:sn,text});appendCvText(sn,text);}
+    catch{chip.className='file-chip error';chip.querySelector('.fs').textContent='✗ Błąd';}
+  }cvInput.value='';
 }
-function removeCvFile(chipId,name){
-  const chip=document.getElementById('chip-'+chipId);if(chip)chip.remove();
-  uploadedCvTexts=uploadedCvTexts.filter(f=>f.name!==name.replace(/\.pdf$/i,''));
-}
-function appendCvText(name,text){
-  const ta=document.getElementById('cvs-text');
-  const ex=ta.value.trim();
-  ta.value=(ex?ex+'\n\n':'')+`--- CV: ${name} ---\n`+text.trim();
-}
+function removeCvFile(chipId,name){const chip=document.getElementById('chip-'+chipId);if(chip)chip.remove();uploadedCvTexts=uploadedCvTexts.filter(f=>f.name!==name.replace(/\.pdf$/i,''));}
+function appendCvText(name,text){const ta=document.getElementById('cvs-text');const ex=ta.value.trim();ta.value=(ex?ex+'\n\n':'')+`--- CV: ${name} ---\n`+text.trim();}
+function clearCVs(){document.getElementById('cvs-text').value='';document.getElementById('uploaded-files').innerHTML='';uploadedCvTexts=[];}
 
-// ── Main screen function ──────────────────────────────────────
+// ── Job PDF (Tool 2) ──────────────────────────────────────────
+const qZone=document.getElementById('q-upload-zone');
+const qInput=document.getElementById('q-file-input');
+qZone.addEventListener('dragover',e=>{e.preventDefault();qZone.classList.add('drag-over');});
+qZone.addEventListener('dragleave',()=>qZone.classList.remove('drag-over'));
+qZone.addEventListener('drop',e=>{e.preventDefault();qZone.classList.remove('drag-over');const f=Array.from(e.dataTransfer.files).find(f=>f.name.endsWith('.pdf'));if(f)handleQFile(f);});
+qInput.addEventListener('change',e=>{if(e.target.files[0])handleQFile(e.target.files[0]);});
+async function handleQFile(file){
+  const cc=document.getElementById('q-file-chip');
+  cc.innerHTML=`<div class="file-chip processing"><span>📋</span><span class="fn">${file.name}</span><span class="fs">🔄 Odczytuję…</span></div>`;
+  try{const text=await extractPdfText(file);document.getElementById('q-job-desc').value=text.trim();cc.innerHTML=`<div class="file-chip done"><span>📋</span><span class="fn">${file.name}</span><span class="fs">✓ Załadowano</span><button class="fr" onclick="clearQJob()">✕</button></div>`;}
+  catch{cc.innerHTML=`<div class="file-chip error"><span>📋</span><span class="fn">${file.name}</span><span class="fs">✗ Błąd</span></div>`;}
+  qInput.value='';
+}
+function clearQJob(){document.getElementById('q-job-desc').value='';document.getElementById('q-file-chip').innerHTML='';}
+
+// ── TOOL 1: Screen CVs ────────────────────────────────────────
 async function screenCVs(){
   const jobDesc=document.getElementById('job-desc').value.trim();
   const cvsText=document.getElementById('cvs-text').value.trim();
-  const errorBox=document.getElementById('error-box');
-  const loadingBox=document.getElementById('loading-box');
-  const resultsSection=document.getElementById('results-section');
-  const screenBtn=document.getElementById('screen-btn');
-
-  errorBox.style.display='none';
-  resultsSection.style.display='none';
-
-  if(!jobDesc||!cvsText){
-    errorBox.textContent='Wklej ogłoszenie i CV kandydatów.';
-    errorBox.style.display='block';
-    return;
-  }
-
-  if(getSearchCount()>=SEARCH_LIMIT){
-    errorBox.textContent='Wykorzystałeś limit 5 bezpłatnych analiz. Napisz na kontakt@znalezieni.pl aby kontynuować.';
-    errorBox.style.display='block';
-    return;
-  }
-
-  screenBtn.disabled=true;
-  screenBtn.textContent='Analizuję…';
-  loadingBox.style.display='block';
-
+  const errorBox=document.getElementById('cv-error-box');
+  const loadingBox=document.getElementById('cv-loading-box');
+  const resultsSection=document.getElementById('cv-results-section');
+  const btn=document.getElementById('screen-btn');
+  errorBox.style.display='none';resultsSection.style.display='none';
+  if(!jobDesc||!cvsText){errorBox.textContent='Wklej ogłoszenie i CV kandydatów.';errorBox.style.display='block';return;}
+  if(getCount(KEY_CV)>=LIMIT){errorBox.textContent='Limit 5 bezpłatnych analiz wykorzystany. Napisz na kontakt@znalezieni.pl.';errorBox.style.display='block';return;}
+  btn.disabled=true;btn.textContent='Analizuję…';loadingBox.style.display='block';
   try{
-    const resp=await fetch('/api/screen',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({jobDesc,cvsText}),
-    });
-
-    if(!resp.ok){
-      const err=await resp.json().catch(()=>({}));
-      if(resp.status===429)throw new Error(err.error||'Limit analiz wyczerpany. Napisz na kontakt@znalezieni.pl.');
-      throw new Error(err.error||`Błąd serwera: HTTP ${resp.status}`);
-    }
-
+    const resp=await fetch('/api/screen',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jobDesc,cvsText})});
+    if(!resp.ok){const err=await resp.json().catch(()=>({}));throw new Error(err.error||`HTTP ${resp.status}`);}
     const data=await resp.json();
-    incrementSearchCount();
-    updateCounter();
-    renderResults(data.kandydaci||[]);
-
-  }catch(err){
-    errorBox.textContent=`Błąd: ${err.message||'Sprawdź dane i spróbuj ponownie.'}`;
-    errorBox.style.display='block';
-  }finally{
-    screenBtn.disabled=false;
-    screenBtn.textContent='Przeanalizuj CV →';
-    loadingBox.style.display='none';
-  }
+    incCount(KEY_CV);updateCounter('cv-search-counter',KEY_CV);
+    renderCvResults(data.kandydaci||[]);
+  }catch(err){errorBox.textContent=`Błąd: ${err.message}`;errorBox.style.display='block';}
+  finally{btn.disabled=false;btn.textContent='Przeanalizuj CV →';loadingBox.style.display='none';}
 }
 
-// ── Render ────────────────────────────────────────────────────
 function recColor(rec){
-  if(rec==='TAK') return{bg:'var(--green-bg)',color:'var(--green-text)',border:'var(--green-border)'};
+  if(rec==='TAK')return{bg:'var(--green-bg)',color:'var(--green-text)',border:'var(--green-border)'};
   if(rec==='MOZE')return{bg:'var(--amber-bg)',color:'var(--amber-text)',border:'var(--amber-border)'};
   return{bg:'var(--red-bg)',color:'var(--red-text)',border:'var(--red-border)'};
 }
 
-function renderResults(results){
-  const section=document.getElementById('results-section');section.style.display='';
-  const counts={TAK:0,MOZE:0,NIE:0};
-  results.forEach(k=>{if(counts[k.rekomendacja]!==undefined)counts[k.rekomendacja]++;});
+function renderCvResults(results){
+  const section=document.getElementById('cv-results-section');section.style.display='';
+  const counts={TAK:0,MOZE:0,NIE:0};results.forEach(k=>{if(counts[k.rekomendacja]!==undefined)counts[k.rekomendacja]++;});
   const cT=recColor('TAK'),cM=recColor('MOZE'),cN=recColor('NIE');
   let html=`<div class="results-header"><div class="results-title">${results.length} kandydatów przeanalizowanych</div><button class="btn-export" onclick="exportCSV()">Eksportuj CSV</button></div>
   <div class="stats-row">
@@ -419,22 +485,65 @@ function renderResults(results){
       </div>
       <div class="card-body">
         <div><div class="col-label" style="color:var(--green-text)">Mocne strony</div>${str}</div>
-        <div>${wk?`<div class="col-label" style="color:var(--amber-text)">Słabe strony</div>${wk}`:''} ${flag}</div>
+        <div>${wk?`<div class="col-label" style="color:var(--amber-text)">Słabe strony</div>${wk}`:''}${flag}</div>
       </div></div>`;
   });
-  section.innerHTML=html;window._lastResults=results;
-  section.scrollIntoView({behavior:'smooth',block:'start'});
+  section.innerHTML=html;window._lastCvResults=results;section.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-
 function exportCSV(){
-  const r=window._lastResults;if(!r)return;
+  const r=window._lastCvResults;if(!r)return;
   const h='Imię i nazwisko,Wynik,Rekomendacja,Czerwona flaga,Podsumowanie\n';
   const rows=r.map(k=>`"${k.imie_nazwisko}","${k.wynik}/10","${k.rekomendacja}","${k.czerwona_flaga||'-'}","${k.podsumowanie}"`).join('\n');
   const blob=new Blob(['\uFEFF'+h+rows],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='wyniki_rekrutacji.csv';a.click();
 }
+
+// ── TOOL 2: Generate bias-free questions ──────────────────────
+async function generateQuestions(){
+  const jobDesc=document.getElementById('q-job-desc').value.trim();
+  const errorBox=document.getElementById('q-error-box');
+  const loadingBox=document.getElementById('q-loading-box');
+  const resultsSection=document.getElementById('q-results-section');
+  const btn=document.getElementById('q-btn');
+  errorBox.style.display='none';resultsSection.style.display='none';
+  if(!jobDesc){errorBox.textContent='Wklej treść ogłoszenia.';errorBox.style.display='block';return;}
+  if(getCount(KEY_Q)>=LIMIT){errorBox.textContent='Limit 5 bezpłatnych generowań wykorzystany. Napisz na kontakt@znalezieni.pl.';errorBox.style.display='block';return;}
+  btn.disabled=true;btn.textContent='Generuję…';loadingBox.style.display='block';
+  try{
+    const resp=await fetch('/api/questions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jobDesc})});
+    if(!resp.ok){const err=await resp.json().catch(()=>({}));throw new Error(err.error||`HTTP ${resp.status}`);}
+    const data=await resp.json();
+    incCount(KEY_Q);updateCounter('q-search-counter',KEY_Q);
+    renderQuestions(data.pytania||[]);
+  }catch(err){errorBox.textContent=`Błąd: ${err.message}`;errorBox.style.display='block';}
+  finally{btn.disabled=false;btn.textContent='Generuj pytania →';loadingBox.style.display='none';}
+}
+
+function renderQuestions(pytania){
+  const section=document.getElementById('q-results-section');section.style.display='';
+  let html=`<div class="results-header"><div class="results-title">${pytania.length} pytań wygenerowanych</div><button class="btn-export" onclick="exportQuestions()">Eksportuj CSV</button></div><div class="questions-list">`;
+  pytania.forEach((p,i)=>{
+    const biasy=(p.eliminuje_biasy||[]).map(b=>`<span class="q-tag q-tag-bias">🛡️ ${esc(b)}</span>`).join('');
+    html+=`<div class="question-card">
+      <div class="question-num">Pytanie ${i+1}</div>
+      <div class="question-text">${esc(p.pytanie)}</div>
+      <div class="question-meta">${biasy}<span class="q-tag q-tag-why">${esc(p.uzasadnienie)}</span></div>
+    </div>`;
+  });
+  html+='</div>';
+  section.innerHTML=html;window._lastQuestions=pytania;section.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function exportQuestions(){
+  const r=window._lastQuestions;if(!r)return;
+  const h='Nr,Pytanie,Eliminuje biasy,Uzasadnienie\n';
+  const rows=r.map((p,i)=>`"${i+1}","${p.pytanie}","${(p.eliminuje_biasy||[]).join(', ')}","${p.uzasadnienie}"`).join('\n');
+  const blob=new Blob(['\uFEFF'+h+rows],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='pytania_screeningowe.csv';a.click();
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 </script>
 </body>
 </html>
