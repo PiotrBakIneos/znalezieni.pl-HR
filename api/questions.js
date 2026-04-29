@@ -54,9 +54,10 @@ async function callAnthropic(body, retries = 3, delayMs = 2000) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { jobDesc } = req.body || {};
+  const { jobDesc, cvText } = req.body || {};
   if (!jobDesc) return res.status(400).json({ error: 'Brak treści ogłoszenia.' });
   if (jobDesc.length > 15000) return res.status(400).json({ error: 'Ogłoszenie jest za długie.' });
+  if (cvText && cvText.length > 20000) return res.status(400).json({ error: 'CV jest za długie.' });
 
   // IP rate limit via Upstash (optional)
   if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
@@ -80,7 +81,9 @@ export default async function handler(req, res) {
       model: 'claude-sonnet-4-6',
       max_tokens: 3000,
       system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: `OGŁOSZENIE O PRACĘ:\n${jobDesc}` }]
+      messages: [{ role: 'user', content: cvText
+        ? `OGŁOSZENIE O PRACĘ:\n${jobDesc}\n\n========\n\nCV KANDYDATA:\n${cvText}\n\nUwaga: masz dostęp do CV kandydata — uwzględnij jego doświadczenie i umiejętności przy formułowaniu pytań, aby były trafniejsze i bardziej spersonalizowane.`
+        : `OGŁOSZENIE O PRACĘ:\n${jobDesc}` }]
     });
 
     const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
