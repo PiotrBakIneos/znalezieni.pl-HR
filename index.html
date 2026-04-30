@@ -4,9 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>znalezieni.pl — Narzędzia HR</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzFhMWEyZSIvPjxyZWN0IHg9IjciIHk9IjEzIiB3aWR0aD0iMTgiIGhlaWdodD0iMTMiIHJ4PSIyIiBmaWxsPSIjRUY5RjI3Ii8+PHJlY3QgeD0iMTEiIHk9IjEwIiB3aWR0aD0iMTAiIGhlaWdodD0iNSIgcng9IjEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0VGOUYyNyIgc3Ryb2tlLXdpZHRoPSIyIi8+PHJlY3QgeD0iMTQiIHk9IjE4IiB3aWR0aD0iNCIgaGVpZ2h0PSIzIiByeD0iMSIgZmlsbD0iIzFhMWEyZSIvPjwvc3ZnPg==">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<!-- GA consent default BEFORE GA script loads — RODO compliance -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied' });
+</script>
 <style>
   :root {
     --navy:#1a1a2e; --gold:#EF9F27; --cream:#F5E6C8; --bg:#FAFAF8;
@@ -144,6 +151,7 @@
   .btn-anon{width:100%;padding:11px 16px;background:#fff;color:#444;border:1.5px dashed var(--blue-border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .2s;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px}
   .btn-anon:hover:not(:disabled){border-color:var(--navy);color:var(--navy);background:#f8f9ff}
   .btn-anon:disabled{opacity:.6;cursor:not-allowed}
+  .truncation-warn{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;padding:8px 14px;font-size:.78rem;color:var(--amber-text);margin-bottom:8px;display:none}
   .btn-anon.done{background:var(--green-bg);border-color:var(--green-border);color:var(--green-text)}
   .anon-spinner{width:14px;height:14px;border:2px solid #cce;border-top-color:#1a56db;border-radius:50%;animation:spin .7s linear infinite;display:none}
 
@@ -158,23 +166,13 @@
   }
 </style>
 
-<!-- Google tag (gtag.js) -->
+<!-- Google Analytics (loads after consent default is already set above) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-695CTY5XED"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-  gtag('config', 'G-695CTY5XED');
+  gtag('config', 'G-695CTY5XED', { anonymize_ip: true });
 </script>
-
-<!-- Microsoft Clarity -->
-<script type="text/javascript">
-  (function(c,l,a,r,i,t,y){
-    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-  })(window, document, "clarity", "script", "wjsuivawn3");
-</script>
+<!-- Microsoft Clarity removed — was recording textarea content (CV data) before consent -->
 
 </head>
 <body>
@@ -452,8 +450,6 @@ const KEY_Q='znalezieni_q';
 const KEY_MATCH='znalezieni_match';
 function getCount(k){return parseInt(localStorage.getItem(k)||'0');}
 function incCount(k){const c=getCount(k)+1;localStorage.setItem(k,c);return c;}
-  // When limit is hit:
-gtag('event', 'limit_reached');
 function updateCounter(elId,key){
   const remaining=Math.max(0,LIMIT-getCount(key));
   const el=document.getElementById(elId);if(!el)return;
@@ -531,8 +527,10 @@ function loadTestData(idx=0){
 
 // ── PDF extraction ────────────────────────────────────────────
 async function extractPdfText(file){
+  if(file.size>5*1024*1024)throw new Error('Plik za duży — maksymalny rozmiar to 5 MB.');
   const ab=await file.arrayBuffer();
   const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+  if(pdf.numPages>30)throw new Error('PDF ma za wiele stron — maksymalnie 30 stron.');
   let text='';
   for(let i=1;i<=pdf.numPages;i++){const page=await pdf.getPage(i);const content=await page.getTextContent();text+=content.items.map(it=>it.str).join(' ')+'\n';}
   return text;
@@ -667,8 +665,7 @@ async function screenCVs(){
     if(!resp.ok){const err=await resp.json().catch(()=>({}));throw new Error(err.error||`HTTP ${resp.status}`);}
     const data=await resp.json();
     incCount(KEY_CV);updateCounter('cv-search-counter',KEY_CV);
-    // After successful CV analysis:
-gtag('event', 'cv_analysis_complete');
+    if(typeof gtag==='function')gtag('event', 'cv_analysis_complete');
     renderCvResults(data.kandydaci||[]);
   }catch(err){errorBox.textContent=`Błąd: ${err.message}`;errorBox.style.display='block';}
   finally{btn.disabled=false;btn.textContent='Przeanalizuj CV →';loadingBox.style.display='none';}
@@ -779,8 +776,7 @@ async function generateQuestions(){
     if(!resp.ok){const err=await resp.json().catch(()=>({}));throw new Error(err.error||`HTTP ${resp.status}`);}
     const data=await resp.json();
     incCount(KEY_Q);updateCounter('q-search-counter',KEY_Q);
-    // After successful question generation:
-gtag('event', 'questions_generated');
+    if(typeof gtag==='function')gtag('event', 'questions_generated');
     renderQuestions(data.pytania||[]);
   }catch(err){errorBox.textContent=`Błąd: ${err.message}`;errorBox.style.display='block';}
   finally{btn.disabled=false;btn.textContent='Generuj pytania →';loadingBox.style.display='none';}
@@ -888,6 +884,14 @@ async function runMatch(){
   }
 
   btn.disabled=true;btn.textContent='Analizuję…';loadingBox.style.display='block';
+
+  // Warn if any CV was truncated
+  const truncatedCount=cvBlocks.filter(b=>b.length>2000).length;
+  let truncWarn=document.getElementById('match-truncation-warn');
+  if(!truncWarn){truncWarn=document.createElement('div');truncWarn.id='match-truncation-warn';truncWarn.className='truncation-warn';loadingBox.parentNode.insertBefore(truncWarn,loadingBox);}
+  if(truncatedCount>0){truncWarn.textContent=`⚠ ${truncatedCount} CV zostało skróconych do analizy — wyniki mogą być niepełne dla długich dokumentów.`;truncWarn.style.display='block';}
+  else{truncWarn.style.display='none';}
+
   try{
     const resp=await fetch('/api/match',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jobDesc,cvsText})});
     if(!resp.ok){const err=await resp.json().catch(()=>({}));throw new Error(err.error||`HTTP ${resp.status}`);}
@@ -1095,7 +1099,7 @@ function loadMatchTestData(idx=0){
 
 <!-- Cookie banner HTML -->
 <div id="cookie-banner" style="display:none">
-  <p>Ta strona używa plików cookie oraz podobnych technologii do celów analitycznych (Google Analytics, Microsoft Clarity). Nie zbieramy danych osobowych bez Twojej zgody. <a onclick="openPrivacy();return false;" href="#">Polityka prywatności</a>.</p>
+  <p>Ta strona używa plików cookie do celów analitycznych (Google Analytics). Nie zbieramy danych osobowych bez Twojej zgody. <a onclick="openPrivacy();return false;" href="#">Polityka prywatności</a>.</p>
   <div class="cookie-btns">
     <button class="btn-cookie-reject" onclick="rejectCookies()">Tylko niezbędne</button>
     <button class="btn-cookie-accept" onclick="acceptCookies()">Akceptuję</button>
@@ -1107,7 +1111,7 @@ function loadMatchTestData(idx=0){
   <div id="privacy-modal">
     <button class="btn-close-privacy" onclick="closePrivacy()">✕</button>
     <h1>Polityka Prywatności</h1>
-    <p><strong>Ostatnia aktualizacja:</strong> 2025</p>
+    <p><strong>Ostatnia aktualizacja:</strong> 2025-06-01</p>
     <p>Niniejsza Polityka Prywatności opisuje zasady przetwarzania danych osobowych i stosowania plików cookie w serwisie <strong>znalezieni.pl</strong>, zgodnie z Rozporządzeniem (UE) 2016/679 (RODO) oraz ustawą Prawo telekomunikacyjne.</p>
 
     <h2>1. Administrator danych</h2>
@@ -1115,8 +1119,8 @@ function loadMatchTestData(idx=0){
 
     <h2>2. Jakie dane przetwarzamy</h2>
     <ul>
-      <li><strong>Dane analityczne:</strong> anonimowe dane o sesji, odwiedzanych podstronach, urządzeniu i przeglądarce (Google Analytics, Microsoft Clarity) — wyłącznie po wyrażeniu zgody.</li>
-      <li><strong>Pliki przesyłane przez użytkownika:</strong> CV i ogłoszenia o pracę są przesyłane do API wyłącznie w celu jednorazowej analizy. Serwis <strong>nie przechowuje</strong> tych plików ani ich treści po zakończeniu sesji.</li>
+      <li><strong>Dane analityczne:</strong> anonimowe dane o sesji, odwiedzanych podstronach, urządzeniu i przeglądarce (Google Analytics) — wyłącznie po wyrażeniu zgody. Adresy IP są anonimizowane.</li>
+      <li><strong>Pliki przesyłane przez użytkownika:</strong> CV i ogłoszenia o pracę są przesyłane do API wyłącznie w celu jednorazowej analizy. Serwis <strong>nie przechowuje</strong> tych plików ani ich treści po zakończeniu sesji. Dane są przesyłane do Anthropic PBC (USA) na podstawie umowy powierzenia przetwarzania danych (DPA) z wykorzystaniem standardowych klauzul umownych (SCC).</li>
       <li><strong>Dane kontaktowe:</strong> przetwarzamy adres e-mail wyłącznie jeśli użytkownik wyśle wiadomość na kontakt@znalezieni.pl.</li>
     </ul>
 
@@ -1131,22 +1135,21 @@ function loadMatchTestData(idx=0){
     <p>Serwis używa następujących kategorii plików cookie:</p>
     <ul>
       <li><strong>Niezbędne:</strong> wymagane do działania serwisu (np. zapamiętanie limitu wyszukiwań). Nie wymagają zgody.</li>
-      <li><strong>Analityczne (za zgodą):</strong> Google Analytics (G-695CTY5XED) — statystyki użytkowania; Microsoft Clarity (wjsuivawn3) — nagrania sesji i mapy ciepła. Dane są anonimizowane lub pseudonimizowane.</li>
+      <li><strong>Analityczne (za zgodą):</strong> Google Analytics (G-695CTY5XED) — statystyki użytkowania. Dane są anonimizowane (anonymize_ip). Przechowywane przez Google przez 26 miesięcy.</li>
     </ul>
-    <p>Możesz wycofać zgodę w dowolnym momencie, klikając „Tylko niezbędne" w banerze cookie (usuń cookies w ustawieniach przeglądarki i odśwież stronę) lub zmieniając ustawienia przeglądarki.</p>
+    <p>Możesz wycofać zgodę w dowolnym momencie, klikając „Tylko niezbędne" w banerze cookie lub zmieniając ustawienia przeglądarki.</p>
 
     <h2>5. Odbiorcy danych</h2>
     <ul>
       <li>Google LLC (Google Analytics) — dane przekazywane do USA na podstawie standardowych klauzul umownych (SCC).</li>
-      <li>Microsoft Corporation (Clarity) — dane przekazywane do USA na podstawie SCC.</li>
-      <li>Anthropic PBC — treści ogłoszeń i CV przesyłane do API w celu analizy AI; dane nie są przechowywane po zakończeniu żądania.</li>
+      <li>Anthropic PBC — treści ogłoszeń i CV przesyłane do API w celu analizy AI na podstawie umowy DPA i SCC; dane nie są przechowywane po zakończeniu żądania API.</li>
     </ul>
 
     <h2>6. Prawa użytkownika</h2>
-    <p>Zgodnie z RODO przysługuje Ci prawo do: dostępu do danych, sprostowania, usunięcia, ograniczenia przetwarzania, wniesienia sprzeciwu oraz przenoszenia danych. Masz również prawo do wniesienia skargi do Prezesa Urzędu Ochrony Danych Osobowych (UODO), ul. Stawki 2, 00-193 Warszawa.</p>
+    <p>Zgodnie z RODO przysługuje Ci prawo do: dostępu do danych, sprostowania, usunięcia, ograniczenia przetwarzania, wniesienia sprzeciwu oraz przenoszenia danych. Wnioski dotyczące erasure danych analitycznych są realizowane w terminie 30 dni od zgłoszenia. Masz również prawo do wniesienia skargi do Prezesa Urzędu Ochrony Danych Osobowych (UODO), ul. Stawki 2, 00-193 Warszawa.</p>
 
     <h2>7. Okres przechowywania</h2>
-    <p>Dane analityczne są przechowywane przez Google Analytics przez 26 miesięcy. Serwis znalezieni.pl nie przechowuje danych aplikacyjnych użytkowników.</p>
+    <p>Dane analityczne są przechowywane przez Google Analytics przez 26 miesięcy. Serwis znalezieni.pl nie przechowuje danych aplikacyjnych użytkowników po zakończeniu sesji.</p>
 
     <h2>8. Kontakt</h2>
     <p>W sprawach dotyczących ochrony danych osobowych: <a href="mailto:kontakt@znalezieni.pl">kontakt@znalezieni.pl</a></p>
@@ -1158,18 +1161,12 @@ function loadMatchTestData(idx=0){
   const CONSENT_KEY = 'znalezieni_cookie_consent';
 
   function loadAnalytics() {
-    // GA and Clarity are already loaded in <head> (after consent check below)
-    // Here we just configure them as active
     if(typeof gtag === 'function') {
       gtag('consent', 'update', { analytics_storage: 'granted' });
-    }
-    if(typeof clarity === 'function') {
-      clarity('consent');
     }
   }
 
   function blockAnalytics() {
-    // Signal denied consent to GA
     if(typeof gtag === 'function') {
       gtag('consent', 'update', { analytics_storage: 'denied' });
     }
@@ -1197,16 +1194,9 @@ function loadMatchTestData(idx=0){
     document.body.style.overflow = '';
   }
 
-  // On load: check consent state
   (function initConsent() {
-    // Set GA to denied by default until consent given (RODO-compliant)
-    if(typeof gtag === 'function') {
-      gtag('consent', 'default', { analytics_storage: 'denied' });
-    }
-
     const stored = localStorage.getItem(CONSENT_KEY);
     if (!stored) {
-      // First visit — show banner
       document.getElementById('cookie-banner').style.display = 'flex';
     } else if (stored === 'accepted') {
       loadAnalytics();
