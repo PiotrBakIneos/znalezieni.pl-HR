@@ -18,7 +18,7 @@
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-  
+
   /* HEADER */
   .header{background:var(--navy);padding:1.25rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.3)}
   .logo{font-family:'Playfair Display',Georgia,serif;font-size:1.6rem;color:var(--cream);cursor:pointer}
@@ -155,16 +155,24 @@
   }
 </style>
 
-  <!-- Google tag (gtag.js) -->
+<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-695CTY5XED"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-695CTY5XED');
 </script>
-  
+
+<!-- Microsoft Clarity -->
+<script type="text/javascript">
+  (function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+  })(window, document, "clarity", "script", "wjsuivawn3");
+</script>
+
 </head>
 <body>
 
@@ -713,9 +721,163 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
   <div style="font-size:.75rem;color:#555;line-height:1.8;max-width:680px;margin:0 auto">
     Narzędzie wspiera proces rekrutacji — ostateczna decyzja należy zawsze do rekrutera.
     znalezieni.pl nie przechowuje żadnych danych aplikacyjnych.<br>
-    <span style="color:#3a3a5a">© 2025 znalezieni.pl · <a href="mailto:kontakt@znalezieni.pl" style="color:#555;text-decoration:none">kontakt@znalezieni.pl</a></span>
+    <span style="color:#3a3a5a">© 2025 znalezieni.pl · <a href="mailto:kontakt@znalezieni.pl" style="color:#555;text-decoration:none">kontakt@znalezieni.pl</a> · <a href="#" onclick="openPrivacy();return false;" style="color:#555;text-decoration:none">Polityka prywatności</a></span>
   </div>
 </footer>
+
+<!-- ═══════════════════════════════════════════════════════════
+     RODO / COOKIE BANNER + POLITYKA PRYWATNOŚCI
+     ═══════════════════════════════════════════════════════════ -->
+<style>
+  /* Cookie banner */
+  #cookie-banner{position:fixed;bottom:0;left:0;right:0;background:#1a1a2e;color:#ccc;font-size:.8rem;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:1.5rem;z-index:9999;box-shadow:0 -4px 20px rgba(0,0,0,.4);flex-wrap:wrap}
+  #cookie-banner p{margin:0;line-height:1.6;flex:1;min-width:220px}
+  #cookie-banner a{color:var(--gold);text-decoration:underline;cursor:pointer}
+  .cookie-btns{display:flex;gap:10px;flex-shrink:0}
+  .btn-cookie-accept{background:var(--gold);color:#1a1a2e;border:none;padding:9px 20px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer}
+  .btn-cookie-reject{background:transparent;color:#888;border:1px solid #444;padding:9px 16px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.82rem;cursor:pointer}
+  .btn-cookie-reject:hover{border-color:#888;color:#ccc}
+
+  /* Privacy policy modal */
+  #privacy-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;overflow-y:auto;padding:2rem 1rem}
+  #privacy-modal{background:#fff;max-width:720px;margin:0 auto;border-radius:16px;padding:2.5rem 2.5rem 2rem;position:relative;font-size:.85rem;color:#333;line-height:1.75}
+  #privacy-modal h1{font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--navy);margin-bottom:1.5rem}
+  #privacy-modal h2{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--navy);margin:1.5rem 0 .5rem}
+  #privacy-modal p,#privacy-modal li{margin-bottom:.5rem}
+  #privacy-modal ul{padding-left:1.4rem}
+  #privacy-modal a{color:var(--gold)}
+  .btn-close-privacy{position:absolute;top:1rem;right:1.25rem;background:none;border:none;font-size:1.5rem;cursor:pointer;color:#aaa;line-height:1}
+  .btn-close-privacy:hover{color:#333}
+  @media(max-width:640px){#privacy-modal{padding:1.5rem 1.25rem}}
+</style>
+
+<!-- Cookie banner HTML -->
+<div id="cookie-banner" style="display:none">
+  <p>Ta strona używa plików cookie oraz podobnych technologii do celów analitycznych (Google Analytics, Microsoft Clarity). Nie zbieramy danych osobowych bez Twojej zgody. <a onclick="openPrivacy();return false;" href="#">Polityka prywatności</a>.</p>
+  <div class="cookie-btns">
+    <button class="btn-cookie-reject" onclick="rejectCookies()">Tylko niezbędne</button>
+    <button class="btn-cookie-accept" onclick="acceptCookies()">Akceptuję</button>
+  </div>
+</div>
+
+<!-- Privacy policy modal HTML -->
+<div id="privacy-overlay" onclick="if(event.target===this)closePrivacy()">
+  <div id="privacy-modal">
+    <button class="btn-close-privacy" onclick="closePrivacy()">✕</button>
+    <h1>Polityka Prywatności</h1>
+    <p><strong>Ostatnia aktualizacja:</strong> 2025</p>
+    <p>Niniejsza Polityka Prywatności opisuje zasady przetwarzania danych osobowych i stosowania plików cookie w serwisie <strong>znalezieni.pl</strong>, zgodnie z Rozporządzeniem (UE) 2016/679 (RODO) oraz ustawą Prawo telekomunikacyjne.</p>
+
+    <h2>1. Administrator danych</h2>
+    <p>Administratorem danych osobowych jest właściciel serwisu znalezieni.pl. W sprawach związanych z ochroną danych osobowych prosimy o kontakt: <a href="mailto:kontakt@znalezieni.pl">kontakt@znalezieni.pl</a>.</p>
+
+    <h2>2. Jakie dane przetwarzamy</h2>
+    <ul>
+      <li><strong>Dane analityczne:</strong> anonimowe dane o sesji, odwiedzanych podstronach, urządzeniu i przeglądarce (Google Analytics, Microsoft Clarity) — wyłącznie po wyrażeniu zgody.</li>
+      <li><strong>Pliki przesyłane przez użytkownika:</strong> CV i ogłoszenia o pracę są przesyłane do API wyłącznie w celu jednorazowej analizy. Serwis <strong>nie przechowuje</strong> tych plików ani ich treści po zakończeniu sesji.</li>
+      <li><strong>Dane kontaktowe:</strong> przetwarzamy adres e-mail wyłącznie jeśli użytkownik wyśle wiadomość na kontakt@znalezieni.pl.</li>
+    </ul>
+
+    <h2>3. Podstawa prawna przetwarzania</h2>
+    <ul>
+      <li>Zgoda użytkownika (art. 6 ust. 1 lit. a RODO) — dla plików cookie analitycznych.</li>
+      <li>Uzasadniony interes administratora (art. 6 ust. 1 lit. f RODO) — dla niezbędnych plików cookie technicznych zapewniających działanie serwisu.</li>
+      <li>Wykonanie usługi (art. 6 ust. 1 lit. b RODO) — dla danych przetwarzanych podczas korzystania z narzędzi.</li>
+    </ul>
+
+    <h2>4. Pliki cookie</h2>
+    <p>Serwis używa następujących kategorii plików cookie:</p>
+    <ul>
+      <li><strong>Niezbędne:</strong> wymagane do działania serwisu (np. zapamiętanie limitu wyszukiwań). Nie wymagają zgody.</li>
+      <li><strong>Analityczne (za zgodą):</strong> Google Analytics (G-695CTY5XED) — statystyki użytkowania; Microsoft Clarity (wjsuivawn3) — nagrania sesji i mapy ciepła. Dane są anonimizowane lub pseudonimizowane.</li>
+    </ul>
+    <p>Możesz wycofać zgodę w dowolnym momencie, klikając „Tylko niezbędne" w banerze cookie (usuń cookies w ustawieniach przeglądarki i odśwież stronę) lub zmieniając ustawienia przeglądarki.</p>
+
+    <h2>5. Odbiorcy danych</h2>
+    <ul>
+      <li>Google LLC (Google Analytics) — dane przekazywane do USA na podstawie standardowych klauzul umownych (SCC).</li>
+      <li>Microsoft Corporation (Clarity) — dane przekazywane do USA na podstawie SCC.</li>
+      <li>Anthropic PBC — treści ogłoszeń i CV przesyłane do API w celu analizy AI; dane nie są przechowywane po zakończeniu żądania.</li>
+    </ul>
+
+    <h2>6. Prawa użytkownika</h2>
+    <p>Zgodnie z RODO przysługuje Ci prawo do: dostępu do danych, sprostowania, usunięcia, ograniczenia przetwarzania, wniesienia sprzeciwu oraz przenoszenia danych. Masz również prawo do wniesienia skargi do Prezesa Urzędu Ochrony Danych Osobowych (UODO), ul. Stawki 2, 00-193 Warszawa.</p>
+
+    <h2>7. Okres przechowywania</h2>
+    <p>Dane analityczne są przechowywane przez Google Analytics przez 26 miesięcy. Serwis znalezieni.pl nie przechowuje danych aplikacyjnych użytkowników.</p>
+
+    <h2>8. Kontakt</h2>
+    <p>W sprawach dotyczących ochrony danych osobowych: <a href="mailto:kontakt@znalezieni.pl">kontakt@znalezieni.pl</a></p>
+  </div>
+</div>
+
+<script>
+  // ── Cookie consent logic ──────────────────────────────────────
+  const CONSENT_KEY = 'znalezieni_cookie_consent';
+
+  function loadAnalytics() {
+    // GA and Clarity are already loaded in <head> (after consent check below)
+    // Here we just configure them as active
+    if(typeof gtag === 'function') {
+      gtag('consent', 'update', { analytics_storage: 'granted' });
+    }
+    if(typeof clarity === 'function') {
+      clarity('consent');
+    }
+  }
+
+  function blockAnalytics() {
+    // Signal denied consent to GA
+    if(typeof gtag === 'function') {
+      gtag('consent', 'update', { analytics_storage: 'denied' });
+    }
+  }
+
+  function acceptCookies() {
+    localStorage.setItem(CONSENT_KEY, 'accepted');
+    document.getElementById('cookie-banner').style.display = 'none';
+    loadAnalytics();
+  }
+
+  function rejectCookies() {
+    localStorage.setItem(CONSENT_KEY, 'rejected');
+    document.getElementById('cookie-banner').style.display = 'none';
+    blockAnalytics();
+  }
+
+  function openPrivacy() {
+    document.getElementById('privacy-overlay').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePrivacy() {
+    document.getElementById('privacy-overlay').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  // On load: check consent state
+  (function initConsent() {
+    // Set GA to denied by default until consent given (RODO-compliant)
+    if(typeof gtag === 'function') {
+      gtag('consent', 'default', { analytics_storage: 'denied' });
+    }
+
+    const stored = localStorage.getItem(CONSENT_KEY);
+    if (!stored) {
+      // First visit — show banner
+      document.getElementById('cookie-banner').style.display = 'flex';
+    } else if (stored === 'accepted') {
+      loadAnalytics();
+    } else {
+      blockAnalytics();
+    }
+  })();
+
+  // Close privacy modal with Escape key
+  document.addEventListener('keydown', function(e) {
+    if(e.key === 'Escape') closePrivacy();
+  });
+</script>
   
 </body>
 </html>
