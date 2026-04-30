@@ -147,24 +147,16 @@
   .btn-anon.done{background:var(--green-bg);border-color:var(--green-border);color:var(--green-text)}
   .anon-spinner{width:14px;height:14px;border:2px solid #cce;border-top-color:#1a56db;border-radius:50%;animation:spin .7s linear infinite;display:none}
 
+  @media(max-width:860px){
+    .tools-grid{grid-template-columns:1fr 1fr}
+  }
   @media(max-width:640px){
     .tools-grid{grid-template-columns:1fr}
     .grid-2,.card-body,.stats-row,.demo-jobs-grid{grid-template-columns:1fr;display:flex;flex-direction:column}
     .header{flex-direction:column;gap:12px;align-items:flex-start}
     .home-title{font-size:1.8rem}
   }
-
-  /* TOOL 3 - ROLE MATCH */
-  .roles-container{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
-  .role-input-row{display:flex;gap:8px;align-items:flex-start}
-  .role-num{font-size:.72rem;font-weight:700;color:var(--gold);min-width:20px;margin-top:14px}
-  .role-input-row textarea{height:100px;font-size:.78rem}
-  .btn-add-role{width:100%;padding:10px;background:transparent;border:1.5px dashed var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.85rem;color:#888;cursor:pointer;transition:all .2s;margin-bottom:12px}
-  .btn-add-role:hover{border-color:var(--gold);color:var(--navy)}
-  .btn-remove-role{background:none;border:none;cursor:pointer;color:#ccc;font-size:1.1rem;padding:4px;margin-top:10px;transition:color .15s}
-  .btn-remove-role:hover{color:var(--red-text)}
-  .role-card{background:var(--card);border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:12px;border:1px solid;border-left:4px solid;transition:box-shadow .2s}
-  .role-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.07)}
+</style>
 
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-695CTY5XED"></script>
@@ -228,16 +220,81 @@
 
       <div class="tool-card" onclick="showTool('match')">
         <span class="tool-icon">🔍</span>
-        <div class="tool-name">Dopasuj rolę</div>
-        <div class="tool-desc">Wgraj CV jednego kandydata i do 5 ogłoszeń — narzędzie pokaże do której roli pasuje najlepiej, gdzie są luki i która oferta ma największy potencjał.</div>
+        <div class="tool-name">Dopasuj kandydata do roli</div>
+        <div class="tool-desc">1 ogłoszenie + do 10 CV — AI porównuje każdego kandydata z wymaganiami roli, wyjaśnia pasowanie i wskazuje czego brakuje każdemu odrzuconemu.</div>
         <div class="tool-tags">
-          <span class="tool-tag">1 kandydat × 5 ról</span>
-          <span class="tool-tag">Ranking ról</span>
-          <span class="tool-tag">Analiza luk</span>
+          <span class="tool-tag">Analiza dopasowania</span>
+          <span class="tool-tag">Luki kompetencyjne</span>
+          <span class="tool-tag">Do 10 kandydatów</span>
         </div>
         <div class="tool-cta">Otwórz narzędzie →</div>
       </div>
+
+    </div><!-- /tools-grid -->
+  </div><!-- /view-home -->
+
+  <!-- TOOL 3: ROLE MATCH -->
+  <div id="view-match" class="tool-view">
+    <div class="tool-header">
+      <h2>🔍 Dopasuj kandydata do roli</h2>
+      <p>Wgraj 1 ogłoszenie i do 10 CV — otrzymasz szczegółową analizę dopasowania każdego kandydata</p>
     </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="field-header">
+          <label class="field-label">Ogłoszenie o pracę</label>
+          <button class="btn-clear" onclick="clearMatchJob()">✕ Wyczyść</button>
+        </div>
+        <div class="upload-zone" id="match-job-upload-zone" onclick="document.getElementById('match-job-file-input').click()">
+          <div class="upload-icon">📋</div>
+          <div class="upload-text"><strong>Kliknij lub przeciągnij PDF z ogłoszeniem</strong></div>
+        </div>
+        <input type="file" id="match-job-file-input" accept=".pdf" style="display:none">
+        <div id="match-job-file-chip"></div>
+        <textarea id="match-job-desc" placeholder="…lub wklej treść ogłoszenia — stanowisko, wymagania, zakres obowiązków..." style="height:220px"></textarea>
+      </div>
+      <div>
+        <div class="field-header">
+          <label class="field-label">CV Kandydatów <span style="font-weight:400;color:#aaa">(max 10)</span></label>
+          <button class="btn-clear" onclick="clearMatchCVs()">✕ Wyczyść</button>
+        </div>
+        <div class="upload-zone" id="match-cv-upload-zone" onclick="document.getElementById('match-cv-file-input').click()">
+          <div class="upload-icon">📎</div>
+          <div class="upload-text"><strong>Kliknij lub przeciągnij pliki PDF z CV</strong><br><span style="font-size:.75rem">Maksymalnie 10 plików jednocześnie</span></div>
+        </div>
+        <input type="file" id="match-cv-file-input" multiple accept=".pdf" style="display:none">
+        <div class="uploaded-files" id="match-uploaded-files"></div>
+        <textarea id="match-cvs-text" placeholder="…lub wklej CV tekstowo — oddziel separatorem '--- CV 1: Jan Kowalski ---'" style="height:160px"></textarea>
+      </div>
+    </div>
+
+    <div id="match-error-box" class="error-box"></div>
+
+    <!-- Demo data for Tool 3 -->
+    <div class="info-card" style="margin-bottom:16px">
+      <h3 style="font-size:.82rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:12px">Przykładowe ogłoszenia — kliknij aby załadować z CV</h3>
+      <div class="demo-jobs-grid" id="match-demo-jobs-grid" style="grid-template-columns:repeat(3,1fr)"></div>
+    </div>
+
+    <!-- Anonymization UI Tool 3 -->
+    <div id="match-anon-confirm" class="anon-confirm"></div>
+    <div id="match-anon-warning" class="anon-warning">⚠ CV zostało zmodyfikowane po anonimizacji — dane osobowe mogą być widoczne.</div>
+    <button class="btn-anon" id="match-anon-btn" onclick="anonymizeCVsTool('match')">
+      <span id="match-anon-spinner" class="anon-spinner"></span>
+      <span id="match-anon-btn-label">🔒 Zanonimizuj CV przed analizą</span>
+    </button>
+
+    <div class="btn-row">
+      <button class="btn-primary" id="match-btn" onclick="runMatch()">Analizuj dopasowanie →</button>
+    </div>
+    <div id="match-search-counter" class="search-counter"></div>
+    <div class="loading-box" id="match-loading-box">
+      <div class="loading-spinner"></div>
+      <div style="font-size:.95rem;color:#555">Analizuję dopasowanie kandydatów…</div>
+      <div style="font-size:.8rem;color:#aaa;margin-top:6px">To zajmie około 20–40 sekund</div>
+    </div>
+    <div id="match-results-section" style="display:none"></div>
   </div>
 
   <!-- TOOL 1: CV SCREENING -->
@@ -362,6 +419,15 @@
     </div>
 
     <div id="q-error-box" class="error-box"></div>
+
+    <!-- Anonymization UI Tool 2 -->
+    <div id="q-anon-confirm" class="anon-confirm"></div>
+    <div id="q-anon-warning" class="anon-warning">⚠ CV zostało zmodyfikowane po anonimizacji — dane osobowe mogą być widoczne.</div>
+    <button class="btn-anon" id="q-anon-btn" onclick="anonymizeCVsTool('q')">
+      <span id="q-anon-spinner" class="anon-spinner"></span>
+      <span id="q-anon-btn-label">🔒 Zanonimizuj CV przed generowaniem</span>
+    </button>
+
     <div class="btn-row">
       <button class="btn-primary" id="q-btn" onclick="generateQuestions()">Generuj pytania →</button>
     </div>
@@ -372,50 +438,6 @@
       <div style="font-size:.8rem;color:#aaa;margin-top:6px">To zajmie około 15–20 sekund</div>
     </div>
     <div id="q-results-section" style="display:none"></div>
-  </div>
-
-  <!-- TOOL 3: ROLE MATCH -->
-  <div id="view-match" class="tool-view">
-    <div class="tool-header">
-      <h2>🔍 Dopasuj rolę</h2>
-      <p>Wgraj CV jednego kandydata i do 5 ogłoszeń — zobaczysz do której roli pasuje najlepiej</p>
-    </div>
-
-    <div class="grid-2" style="margin-bottom:16px">
-      <div>
-        <div class="field-header">
-          <label class="field-label">CV Kandydata</label>
-          <button class="btn-clear" onclick="clearMatchCv()">✕ Wyczyść</button>
-        </div>
-        <div class="upload-zone" id="match-cv-zone" onclick="document.getElementById('match-cv-input').click()">
-          <div class="upload-icon">📄</div>
-          <div class="upload-text"><strong>Kliknij lub przeciągnij PDF z CV</strong></div>
-        </div>
-        <input type="file" id="match-cv-input" accept=".pdf" style="display:none">
-        <div id="match-cv-chip"></div>
-        <textarea id="match-cv-text" placeholder="…lub wklej CV kandydata — doświadczenie, umiejętności, wykształcenie..." style="height:280px"></textarea>
-      </div>
-      <div>
-        <div class="field-header">
-          <label class="field-label">Ogłoszenia o pracę (do 5)</label>
-          <button class="btn-clear" onclick="clearMatchRoles()">✕ Wyczyść</button>
-        </div>
-        <div class="roles-container" id="roles-container"></div>
-        <button class="btn-add-role" id="add-role-btn" onclick="addRole()">+ Dodaj kolejną rolę (maks. 5)</button>
-      </div>
-    </div>
-
-    <div id="match-error-box" class="error-box"></div>
-    <div class="btn-row">
-      <button class="btn-primary" id="match-btn" onclick="matchRoles()">Porównaj role →</button>
-    </div>
-    <div id="match-search-counter" class="search-counter"></div>
-    <div class="loading-box" id="match-loading-box">
-      <div class="loading-spinner"></div>
-      <div style="font-size:.95rem;color:#555">Trwa analiza dopasowania ról…</div>
-      <div style="font-size:.8rem;color:#aaa;margin-top:6px">To zajmie około 15–20 sekund</div>
-    </div>
-    <div id="match-results-section" style="display:none"></div>
   </div>
 
 </div><!-- /main -->
@@ -457,7 +479,7 @@ function showTool(tool){
   document.getElementById('back-btn').style.display='block';
   if(tool==='cv')updateCounter('cv-search-counter',KEY_CV);
   if(tool==='questions')updateCounter('q-search-counter',KEY_Q);
-  if(tool==='match'){updateCounter('match-search-counter',KEY_MATCH);initRoles();}
+  if(tool==='match')updateCounter('match-search-counter',KEY_MATCH);
 }
 function showDemoData(){
   document.getElementById('view-cv').style.display='none';
@@ -639,7 +661,9 @@ async function screenCVs(){
   if(getCount(KEY_CV)>=LIMIT){errorBox.textContent='Limit 5 bezpłatnych analiz wykorzystany. Napisz na kontakt@znalezieni.pl.';errorBox.style.display='block';return;}
   btn.disabled=true;btn.textContent='Analizuję…';loadingBox.style.display='block';
   try{
-    const resp=await fetch('/api/screen',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jobDesc,cvsText})});
+    const jobDescSend = trimInput(jobDesc, 4000);
+    const cvsSend = trimInput(cvsText, 20000);
+    const resp=await fetch('/api/screen',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jobDesc:jobDescSend,cvsText:cvsSend})});
     if(!resp.ok){const err=await resp.json().catch(()=>({}));throw new Error(err.error||`HTTP ${resp.status}`);}
     const data=await resp.json();
     incCount(KEY_CV);updateCounter('cv-search-counter',KEY_CV);
@@ -749,8 +773,8 @@ async function generateQuestions(){
   if(getCount(KEY_Q)>=LIMIT){errorBox.textContent='Limit 5 bezpłatnych generowań wykorzystany. Napisz na kontakt@znalezieni.pl.';errorBox.style.display='block';return;}
   btn.disabled=true;btn.textContent='Generuję…';loadingBox.style.display='block';
   try{
-    const body={jobDesc};
-    if(cvText)body.cvText=cvText;
+    const body={jobDesc:trimInput(jobDesc,4000)};
+    if(cvText)body.cvText=trimInput(cvText,3000);
     const resp=await fetch('/api/questions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!resp.ok){const err=await resp.json().catch(()=>({}));throw new Error(err.error||`HTTP ${resp.status}`);}
     const data=await resp.json();
@@ -785,120 +809,290 @@ function exportQuestions(){
   const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='pytania_screeningowe.csv';a.click();
 }
 
-// ── TOOL 3: Role match ────────────────────────────────────────
-let roleCount=0;
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
-function initRoles(){
-  if(roleCount===0){addRole();addRole();}// start with 2 rows
+// ── Input truncation helper — fixes "za dużo danych" error ───
+// Trims text to ~maxChars, cutting at a word boundary
+function trimInput(text, maxChars){
+  if(!text || text.length <= maxChars) return text;
+  const cut = text.lastIndexOf(' ', maxChars);
+  return text.slice(0, cut > 0 ? cut : maxChars) + '\n[...tekst skrócony do analizy...]';
 }
 
-function addRole(){
-  if(roleCount>=5)return;
-  roleCount++;
-  const container=document.getElementById('roles-container');
-  const row=document.createElement('div');
-  row.className='role-input-row';
-  row.id=`role-row-${roleCount}`;
-  row.innerHTML=`<span class="role-num">${roleCount}</span><textarea id="role-${roleCount}" placeholder="Wklej treść ogłoszenia ${roleCount}…"></textarea><button class="btn-remove-role" onclick="removeRole(${roleCount})" title="Usuń">✕</button>`;
-  container.appendChild(row);
-  if(roleCount>=5)document.getElementById('add-role-btn').style.display='none';
+// ── TOOL 3: Role Match — PDF upload ──────────────────────────
+let matchCvTexts=[];
+
+const matchJobZone=document.getElementById('match-job-upload-zone');
+const matchJobInput=document.getElementById('match-job-file-input');
+matchJobZone.addEventListener('dragover',e=>{e.preventDefault();matchJobZone.classList.add('drag-over');});
+matchJobZone.addEventListener('dragleave',()=>matchJobZone.classList.remove('drag-over'));
+matchJobZone.addEventListener('drop',e=>{e.preventDefault();matchJobZone.classList.remove('drag-over');const f=Array.from(e.dataTransfer.files).find(f=>f.name.endsWith('.pdf'));if(f)handleMatchJobFile(f);});
+matchJobInput.addEventListener('change',e=>{if(e.target.files[0])handleMatchJobFile(e.target.files[0]);});
+async function handleMatchJobFile(file){
+  const cc=document.getElementById('match-job-file-chip');
+  cc.innerHTML=`<div class="file-chip processing"><span>📋</span><span class="fn">${file.name}</span><span class="fs">🔄 Odczytuję…</span></div>`;
+  try{const text=await extractPdfText(file);document.getElementById('match-job-desc').value=text.trim();cc.innerHTML=`<div class="file-chip done"><span>📋</span><span class="fn">${file.name}</span><span class="fs">✓ Załadowano</span><button class="fr" onclick="clearMatchJob()">✕</button></div>`;}
+  catch{cc.innerHTML=`<div class="file-chip error"><span>📋</span><span class="fn">${file.name}</span><span class="fs">✗ Błąd</span></div>`;}
+  matchJobInput.value='';
 }
+function clearMatchJob(){document.getElementById('match-job-desc').value='';document.getElementById('match-job-file-chip').innerHTML='';}
 
-function removeRole(num){
-  const row=document.getElementById(`role-row-${num}`);if(row)row.remove();
-  document.getElementById('add-role-btn').style.display='';
-  // Renumber visible rows
-  const rows=document.querySelectorAll('#roles-container .role-input-row');
-  rows.forEach((r,i)=>r.querySelector('.role-num').textContent=i+1);
-  roleCount=rows.length;
-}
-
-function clearMatchCv(){document.getElementById('match-cv-text').value='';document.getElementById('match-cv-chip').innerHTML='';}
-function clearMatchRoles(){document.getElementById('roles-container').innerHTML='';roleCount=0;document.getElementById('add-role-btn').style.display='';addRole();addRole();}
-
-// Match CV upload
-const matchCvZone=document.getElementById('match-cv-zone');
-const matchCvInput=document.getElementById('match-cv-input');
+const matchCvZone=document.getElementById('match-cv-upload-zone');
+const matchCvInput=document.getElementById('match-cv-file-input');
 matchCvZone.addEventListener('dragover',e=>{e.preventDefault();matchCvZone.classList.add('drag-over');});
 matchCvZone.addEventListener('dragleave',()=>matchCvZone.classList.remove('drag-over'));
-matchCvZone.addEventListener('drop',e=>{e.preventDefault();matchCvZone.classList.remove('drag-over');const f=Array.from(e.dataTransfer.files).find(f=>f.name.endsWith('.pdf'));if(f)handleMatchCvFile(f);});
-matchCvInput.addEventListener('change',e=>{if(e.target.files[0])handleMatchCvFile(e.target.files[0]);});
-
-async function handleMatchCvFile(file){
-  const cc=document.getElementById('match-cv-chip');
-  cc.innerHTML=`<div class="file-chip processing"><span>📄</span><span class="fn">${file.name}</span><span class="fs">🔄 Odczytuję…</span></div>`;
-  try{const text=await extractPdfText(file);document.getElementById('match-cv-text').value=text.trim();cc.innerHTML=`<div class="file-chip done"><span>📄</span><span class="fn">${file.name}</span><span class="fs">✓ Załadowano</span><button class="fr" onclick="clearMatchCv()">✕</button></div>`;}
-  catch{cc.innerHTML=`<div class="file-chip error"><span>📄</span><span class="fn">${file.name}</span><span class="fs">✗ Błąd</span></div>`;}
-  matchCvInput.value='';
+matchCvZone.addEventListener('drop',e=>{e.preventDefault();matchCvZone.classList.remove('drag-over');handleMatchCvFiles(Array.from(e.dataTransfer.files).filter(f=>f.name.endsWith('.pdf')));});
+matchCvInput.addEventListener('change',e=>handleMatchCvFiles(Array.from(e.target.files)));
+async function handleMatchCvFiles(files){
+  const MAX_CVS=10;
+  for(const file of files){
+    if(matchCvTexts.length>=MAX_CVS){
+      document.getElementById('match-error-box').textContent='Maksymalnie 10 CV — usuń jedno żeby dodać kolejne.';
+      document.getElementById('match-error-box').style.display='block';break;
+    }
+    const id='mchip-'+sid(file.name);const container=document.getElementById('match-uploaded-files');
+    const chip=document.createElement('div');chip.id=id;chip.className='file-chip processing';
+    chip.innerHTML=`<span>📄</span><span class="fn" title="${file.name}">${file.name}</span><span class="fs">🔄 Odczytuję…</span><button class="fr" onclick="removeMatchCvFile('${sid(file.name)}','${file.name.replace(/'/g,"\\'")}')">✕</button>`;
+    container.appendChild(chip);
+    try{const text=await extractPdfText(file);chip.className='file-chip done';chip.querySelector('.fs').textContent='✓ Gotowy';const sn=file.name.replace(/\.pdf$/i,'');matchCvTexts.push({name:sn,text});appendMatchCvText(sn,text);}
+    catch{chip.className='file-chip error';chip.querySelector('.fs').textContent='✗ Błąd';}
+  }matchCvInput.value='';
 }
+function removeMatchCvFile(chipId,name){const chip=document.getElementById('mchip-'+chipId);if(chip)chip.remove();matchCvTexts=matchCvTexts.filter(f=>f.name!==name.replace(/\.pdf$/i,''));}
+function appendMatchCvText(name,text){const ta=document.getElementById('match-cvs-text');const ex=ta.value.trim();ta.value=(ex?ex+'\n\n':'')+`--- CV: ${name} ---\n`+text.trim();}
+function clearMatchCVs(){document.getElementById('match-cvs-text').value='';document.getElementById('match-uploaded-files').innerHTML='';matchCvTexts=[];document.getElementById('match-error-box').style.display='none';}
 
-async function matchRoles(){
-  const cvText=document.getElementById('match-cv-text').value.trim();
+// ── TOOL 3: Run match (direct Claude API call) ────────────────
+async function runMatch(){
+  const jobDescRaw=document.getElementById('match-job-desc').value.trim();
+  const cvsTextRaw=document.getElementById('match-cvs-text').value.trim();
   const errorBox=document.getElementById('match-error-box');
   const loadingBox=document.getElementById('match-loading-box');
   const resultsSection=document.getElementById('match-results-section');
   const btn=document.getElementById('match-btn');
-
   errorBox.style.display='none';resultsSection.style.display='none';
+  if(!jobDescRaw){errorBox.textContent='Wklej treść ogłoszenia o pracę.';errorBox.style.display='block';return;}
+  if(!cvsTextRaw){errorBox.textContent='Wklej lub wgraj CV kandydatów.';errorBox.style.display='block';return;}
+  if(getCount(KEY_MATCH)>=LIMIT){errorBox.textContent='Limit 5 bezpłatnych analiz dopasowania wykorzystany. Napisz na kontakt@znalezieni.pl.';errorBox.style.display='block';return;}
 
-  const roles=[];
-  document.querySelectorAll('#roles-container textarea').forEach((ta,i)=>{
-    const v=ta.value.trim();if(v)roles.push({num:i+1,text:v});
-  });
-
-  if(!cvText){errorBox.textContent='Wklej CV kandydata.';errorBox.style.display='block';return;}
-  if(roles.length===0){errorBox.textContent='Dodaj co najmniej jedno ogłoszenie.';errorBox.style.display='block';return;}
-  if(getCount(KEY_MATCH)>=LIMIT){errorBox.textContent='Limit 5 bezpłatnych analiz wykorzystany. Napisz na kontakt@znalezieni.pl.';errorBox.style.display='block';return;}
+  // Truncate inputs to avoid token limits — job desc max 4000 chars, each CV max 2000 chars
+  const jobDesc = trimInput(jobDescRaw, 4000);
+  // Split CVs by separator and truncate each
+  const cvBlocks = cvsTextRaw.split(/---\s*CV[^-]*---/).map(b=>b.trim()).filter(Boolean);
+  const cvSeps = [...cvsTextRaw.matchAll(/---\s*(CV[^-]*)---/g)].map(m=>m[1].trim());
+  let cvsText;
+  if(cvBlocks.length>0 && cvSeps.length>0){
+    cvsText = cvBlocks.slice(0,10).map((block,i)=>`--- ${cvSeps[i]||'CV '+(i+1)} ---\n${trimInput(block,2000)}`).join('\n\n');
+  } else {
+    cvsText = trimInput(cvsTextRaw, 15000);
+  }
 
   btn.disabled=true;btn.textContent='Analizuję…';loadingBox.style.display='block';
-
   try{
-    const resp=await fetch('/api/match',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cvText,roles})});
-    if(!resp.ok){const err=await resp.json().catch(()=>({}));throw new Error(err.error||`HTTP ${resp.status}`);}
-    const data=await resp.json();
+    const prompt=`Jesteś ekspertem HR. Przeanalizuj dopasowanie kandydatów do poniższej roli.
+
+OGŁOSZENIE O PRACĘ:
+${jobDesc}
+
+CV KANDYDATÓW:
+${cvsText}
+
+Dla KAŻDEGO kandydata zwróć analizę w poniższym formacie JSON. Odpowiedz TYLKO czystym JSON, bez żadnego tekstu przed ani po.
+
+{
+  "rola": "nazwa stanowiska z ogłoszenia",
+  "kandydaci": [
+    {
+      "imie_nazwisko": "Imię Nazwisko lub 'Kandydat 1' jeśli anonimowy",
+      "procent_dopasowania": 85,
+      "poziom": "WYSOKI|SREDNI|NISKI",
+      "podsumowanie_dopasowania": "1-2 zdania dlaczego pasuje lub nie pasuje do roli",
+      "co_pasuje": ["lista konkretnych elementów które spełniają wymagania"],
+      "czego_brakuje": ["lista konkretnych luk kompetencyjnych lub brakujących wymagań — puste jeśli nic nie brakuje"],
+      "rekomendacja": "ZAPROŚ|ROZWAŻ|ODRZUĆ",
+      "uzasadnienie_rekomendacji": "1 zdanie uzasadniające decyzję"
+    }
+  ]
+}`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [{role:'user', content: prompt}]
+      })
+    });
+    if(!response.ok){const e=await response.json().catch(()=>({}));throw new Error(e.error?.message||`HTTP ${response.status}`);}
+    const data=await response.json();
+    const raw=data.content.map(b=>b.text||'').join('').replace(/```json|```/g,'').trim();
+    const parsed=JSON.parse(raw);
     incCount(KEY_MATCH);updateCounter('match-search-counter',KEY_MATCH);
-    if(typeof gtag==='function')gtag('event','match_roles_complete');
-    renderMatchResults(data.role||[]);
-  }catch(err){errorBox.textContent=`Błąd: ${err.message}`;errorBox.style.display='block';}
-  finally{btn.disabled=false;btn.textContent='Porównaj role →';loadingBox.style.display='none';}
+    if(typeof gtag==='function')gtag('event','match_analysis_complete');
+    renderMatchResults(parsed);
+  }catch(err){
+    errorBox.textContent=`Błąd: ${err.message}`;errorBox.style.display='block';
+  }finally{btn.disabled=false;btn.textContent='Analizuj dopasowanie →';loadingBox.style.display='none';}
 }
 
-function renderMatchResults(roles){
+function matchLevelColor(level){
+  if(level==='WYSOKI')return{bg:'var(--green-bg)',color:'var(--green-text)',border:'var(--green-border)'};
+  if(level==='SREDNI')return{bg:'var(--amber-bg)',color:'var(--amber-text)',border:'var(--amber-border)'};
+  return{bg:'var(--red-bg)',color:'var(--red-text)',border:'var(--red-border)'};
+}
+
+function renderMatchResults(parsed){
   const section=document.getElementById('match-results-section');section.style.display='';
-  const counts={TAK:0,MOZE:0,NIE:0};roles.forEach(r=>{if(counts[r.rekomendacja]!==undefined)counts[r.rekomendacja]++;});
-  const cT=recColor('TAK'),cM=recColor('MOZE'),cN=recColor('NIE');
-  let html=`<div class="results-header"><div class="results-title">${roles.length} ról przeanalizowanych</div><button class="btn-export" onclick="exportMatchCSV()">Eksportuj CSV</button></div>
+  const kandydaci=parsed.kandydaci||[];
+  const rola=parsed.rola||'';
+  const counts={ZAPROŚ:0,ROZWAŻ:0,ODRZUĆ:0};
+  kandydaci.forEach(k=>{if(counts[k.rekomendacja]!==undefined)counts[k.rekomendacja]++;});
+  const cZ=matchLevelColor('WYSOKI'),cR=matchLevelColor('SREDNI'),cO=matchLevelColor('NISKI');
+  let html=`<div class="results-header"><div class="results-title">${kandydaci.length} kandydatów do roli: <em>${esc(rola)}</em></div><button class="btn-export" onclick="exportMatchCSV()">Eksportuj CSV</button></div>
   <div class="stats-row">
-    <div class="stat-card" style="background:${cT.bg};border:1px solid ${cT.border}"><div class="stat-num" style="color:${cT.color}">${counts.TAK}</div><div class="stat-label" style="color:${cT.color}">Polecane</div></div>
-    <div class="stat-card" style="background:${cM.bg};border:1px solid ${cM.border}"><div class="stat-num" style="color:${cM.color}">${counts.MOZE}</div><div class="stat-label" style="color:${cM.color}">Do rozważenia</div></div>
-    <div class="stat-card" style="background:${cN.bg};border:1px solid ${cN.border}"><div class="stat-num" style="color:${cN.color}">${counts.NIE}</div><div class="stat-label" style="color:${cN.color}">Słabe dopasowanie</div></div>
+    <div class="stat-card" style="background:${cZ.bg};border:1px solid ${cZ.border}"><div class="stat-num" style="color:${cZ.color}">${counts['ZAPROŚ']}</div><div class="stat-label" style="color:${cZ.color}">Zaproś</div></div>
+    <div class="stat-card" style="background:${cR.bg};border:1px solid ${cR.border}"><div class="stat-num" style="color:${cR.color}">${counts['ROZWAŻ']}</div><div class="stat-label" style="color:${cR.color}">Rozważ</div></div>
+    <div class="stat-card" style="background:${cO.bg};border:1px solid ${cO.border}"><div class="stat-num" style="color:${cO.color}">${counts['ODRZUĆ']}</div><div class="stat-label" style="color:${cO.color}">Odrzuć</div></div>
   </div>`;
-  roles.forEach((r,i)=>{
-    const c=recColor(r.rekomendacja);
-    const strengths=(r.mocne_strony||[]).map(s=>`<div class="strength-item">✓ ${esc(s)}</div>`).join('');
-    const gaps=(r.luki||[]).map(g=>`<div class="weakness-item">✗ ${esc(g)}</div>`).join('');
-    html+=`<div class="role-card" style="border-color:${c.border};border-left-color:${c.border}">
+  // Sort: ZAPROŚ first, then ROZWAŻ, then ODRZUĆ
+  const order={'ZAPROŚ':0,'ROZWAŻ':1,'ODRZUĆ':2};
+  const sorted=[...kandydaci].sort((a,b)=>(order[a.rekomendacja]??3)-(order[b.rekomendacja]??3)||(b.procent_dopasowania-a.procent_dopasowania));
+  sorted.forEach((k,i)=>{
+    const c=matchLevelColor(k.poziom);
+    const pasuje=(k.co_pasuje||[]).map(m=>`<div class="strength-item">✓ ${esc(m)}</div>`).join('');
+    const brakuje=(k.czego_brakuje||[]).map(m=>`<div class="weakness-item">✗ ${esc(m)}</div>`).join('');
+    const pct=k.procent_dopasowania||0;
+    html+=`<div class="candidate-card" style="border-color:${c.border};border-left-color:${c.border}">
       <div class="card-top">
-        <div><div class="candidate-name">${i+1}. ${esc(r.nazwa_roli)}</div><div class="candidate-summary">${esc(r.podsumowanie)}</div></div>
-        <div class="card-badges"><div class="badge" style="background:${c.bg};color:${c.color};border-color:${c.border}">${r.rekomendacja}</div><div class="badge badge-score">${r.wynik}/10</div></div>
+        <div style="flex:1">
+          <div class="candidate-name">${i+1}. ${esc(k.imie_nazwisko)}</div>
+          <div class="candidate-summary">${esc(k.podsumowanie_dopasowania)}</div>
+          <div style="margin-top:8px">
+            <div style="height:6px;background:#eee;border-radius:3px;overflow:hidden;max-width:300px">
+              <div style="height:100%;width:${pct}%;background:${pct>=70?'var(--green-border)':pct>=40?'var(--amber-border)':'var(--red-border)'};border-radius:3px;transition:width .6s"></div>
+            </div>
+            <div style="font-size:.72rem;color:#888;margin-top:3px">${pct}% dopasowania</div>
+          </div>
+        </div>
+        <div class="card-badges">
+          <div class="badge" style="background:${c.bg};color:${c.color};border-color:${c.border}">${esc(k.rekomendacja)}</div>
+        </div>
       </div>
       <div class="card-body">
-        <div><div class="col-label" style="color:var(--green-text)">Mocne strony kandydata</div>${strengths}</div>
-        <div>${gaps?`<div class="col-label" style="color:var(--amber-text)">Luki do uzupełnienia</div>${gaps}`:''}</div>
-      </div></div>`;
+        <div>${pasuje?`<div class="col-label" style="color:var(--green-text)">Co pasuje</div>${pasuje}`:''}</div>
+        <div>
+          ${brakuje?`<div class="col-label" style="color:var(--amber-text)">Czego brakuje</div>${brakuje}`:''}
+          ${k.uzasadnienie_rekomendacji?`<div class="red-flag" style="background:${c.bg};border-color:${c.border};color:${c.color}">💬 ${esc(k.uzasadnienie_rekomendacji)}</div>`:''}
+        </div>
+      </div>
+    </div>`;
   });
-  section.innerHTML=html;window._lastMatchResults=roles;section.scrollIntoView({behavior:'smooth',block:'start'});
+  section.innerHTML=html;window._lastMatchResults=sorted;window._lastMatchRola=rola;section.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function exportMatchCSV(){
   const r=window._lastMatchResults;if(!r)return;
-  const h='Rola,Wynik,Rekomendacja,Luki,Podsumowanie\n';
-  const rows=r.map(role=>`"${role.nazwa_roli}","${role.wynik}/10","${role.rekomendacja}","${(role.luki||[]).join('; ')}","${role.podsumowanie}"`).join('\n');
+  const h='Kandydat,Dopasowanie %,Poziom,Rekomendacja,Co pasuje,Czego brakuje,Uzasadnienie\n';
+  const rows=r.map(k=>`"${k.imie_nazwisko}","${k.procent_dopasowania}%","${k.poziom}","${k.rekomendacja}","${(k.co_pasuje||[]).join('; ')}","${(k.czego_brakuje||[]).join('; ')}","${k.uzasadnienie_rekomendacji||''}"`).join('\n');
   const blob=new Blob(['\uFEFF'+h+rows],{type:'text/csv;charset=utf-8;'});
-  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='dopasowanie_rol.csv';a.click();
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='dopasowanie_kandydatow.csv';a.click();
 }
 
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+// ── Generic anonymization for Tool 2 (q) and Tool 3 (match) ──
+// Each tool has its own prefixed IDs: {prefix}-anon-confirm, etc.
+// cvTextareaId: the textarea holding the CVs
+// onSuccess: callback after anonymization (e.g. auto-run the tool)
+const _anonDone={q:false,match:false};
+
+function resetAnonStateTool(prefix){
+  _anonDone[prefix]=false;
+  const btn=document.getElementById(`${prefix}-anon-btn`);
+  btn.className='btn-anon';
+  const origLabel=prefix==='q'?'🔒 Zanonimizuj CV przed generowaniem':'🔒 Zanonimizuj CV przed analizą';
+  document.getElementById(`${prefix}-anon-btn-label`).textContent=origLabel;
+  btn.onclick=()=>anonymizeCVsTool(prefix);
+  document.getElementById(`${prefix}-anon-confirm`).style.display='none';
+  document.getElementById(`${prefix}-anon-warning`).style.display='none';
+}
+
+// Wire up textarea change listeners to show warning if CV edited after anon
+document.getElementById('q-cv-text').addEventListener('input',()=>{
+  if(_anonDone['q'])document.getElementById('q-anon-warning').style.display='block';
+});
+document.getElementById('match-cvs-text').addEventListener('input',()=>{
+  if(_anonDone['match'])document.getElementById('match-anon-warning').style.display='block';
+});
+
+// Also reset anon state when CVs are cleared
+const _origClearQCv=clearQCv;
+clearQCv=function(){_origClearQCv();resetAnonStateTool('q');};
+const _origClearMatchCVs=clearMatchCVs;
+clearMatchCVs=function(){_origClearMatchCVs();resetAnonStateTool('match');};
+
+async function anonymizeCVsTool(prefix){
+  const cvTextareaId = prefix==='q' ? 'q-cv-text' : 'match-cvs-text';
+  const errorBoxId   = prefix==='q' ? 'q-error-box' : 'match-error-box';
+  const onSuccess    = prefix==='q' ? generateQuestions : runMatch;
+
+  const cvsText=document.getElementById(cvTextareaId).value.trim();
+  const errorBox=document.getElementById(errorBoxId);
+  const btn=document.getElementById(`${prefix}-anon-btn`);
+  const spinner=document.getElementById(`${prefix}-anon-spinner`);
+  const label=document.getElementById(`${prefix}-anon-btn-label`);
+  errorBox.style.display='none';
+  if(!cvsText){errorBox.textContent='Wklej CV kandydatów przed anonimizacją.';errorBox.style.display='block';return;}
+  btn.disabled=true;spinner.style.display='inline-block';label.textContent='Anonimizuję…';
+  try{
+    const resp=await fetch('/api/anonymize',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cvsText})});
+    if(!resp.ok){const err=await resp.json().catch(()=>({}));throw new Error(err.error||`HTTP ${resp.status}`);}
+    const data=await resp.json();
+    document.getElementById(cvTextareaId).value=data.anonymizedText;
+    _anonDone[prefix]=true;
+    document.getElementById(`${prefix}-anon-warning`).style.display='none';
+    const u=data.usunieto||{};
+    const parts=[];
+    if(u.imiona)parts.push(`${u.imiona} ${u.imiona===1?'imię':'imiona/nazwiska'}`);
+    if(u.emaile)parts.push(`${u.emaile} ${u.emaile===1?'email':'emaile'}`);
+    if(u.telefony)parts.push(`${u.telefony} ${u.telefony===1?'numer telefonu':'numery telefonu'}`);
+    if(u.adresy)parts.push(`${u.adresy} ${u.adresy===1?'adres':'adresy'}`);
+    const confirm=document.getElementById(`${prefix}-anon-confirm`);
+    confirm.innerHTML=`<strong>✓ Zanonimizowano pomyślnie.</strong> Usunięto: ${parts.length?parts.join(', '):'brak wykrytych danych osobowych'}.`;
+    confirm.style.display='block';
+    btn.className='btn-anon done';
+    const doneLabel=prefix==='q'?'✓ Zanonimizowane — generuj pytania →':'✓ Zanonimizowane — analizuj →';
+    label.textContent=doneLabel;
+    btn.onclick=onSuccess;
+    btn.disabled=false;spinner.style.display='none';
+    onSuccess();
+  }catch(err){
+    errorBox.textContent=`Błąd anonimizacji: ${err.message}`;errorBox.style.display='block';
+    btn.disabled=false;spinner.style.display='none';
+    const origLabel=prefix==='q'?'🔒 Zanonimizuj CV przed generowaniem':'🔒 Zanonimizuj CV przed analizą';
+    label.textContent=origLabel;
+  }
+}
+
+// ── Tool 3: Demo data (reuse DEMO_JOBS + DEMO_CVS from Tool 1) ─
+(function initMatchDemoJobs(){
+  const grid=document.getElementById('match-demo-jobs-grid');
+  if(!grid)return;
+  DEMO_JOBS.forEach((job,i)=>{
+    const c=document.createElement('div');c.className='demo-job-card';c.id=`mdjob-${i}`;
+    c.innerHTML=`<div class="demo-job-title">${job.title}</div><div class="demo-job-company">${job.company}</div><div class="demo-job-tag">${job.tag}</div><div style="font-size:.78rem;color:var(--green-text);margin-top:6px;font-weight:600">${job.salary}</div>`;
+    c.onclick=()=>loadMatchTestData(i);
+    grid.appendChild(c);
+  });
+})();
+
+function loadMatchTestData(idx=0){
+  document.querySelectorAll('[id^="mdjob-"]').forEach((c,i)=>c.classList.toggle('selected',i===idx));
+  document.getElementById('match-job-desc').value=DEMO_JOBS[idx].text;
+  document.getElementById('match-cvs-text').value=DEMO_CVS.map((cv,i)=>`--- CV ${i+1}: ${cv.name} ---\n${cv.content}`).join('\n\n');
+  document.getElementById('match-uploaded-files').innerHTML='';
+  matchCvTexts=[];
+  resetAnonStateTool('match');
+}
 </script>
 
   <footer style="background:#1a1a2e;padding:1.5rem 2rem;margin-top:3rem;text-align:center">
