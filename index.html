@@ -19,6 +19,16 @@
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-695CTY5XED"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-695CTY5XED');
+</script>
+  
   /* HEADER */
   .header{background:var(--navy);padding:1.25rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.3)}
   .logo{font-family:'Playfair Display',Georgia,serif;font-size:1.6rem;color:var(--cream);cursor:pointer}
@@ -343,6 +353,8 @@ const KEY_CV='znalezieni_cv';
 const KEY_Q='znalezieni_q';
 function getCount(k){return parseInt(localStorage.getItem(k)||'0');}
 function incCount(k){const c=getCount(k)+1;localStorage.setItem(k,c);return c;}
+  // When limit is hit:
+gtag('event', 'limit_reached');
 function updateCounter(elId,key){
   const remaining=Math.max(0,LIMIT-getCount(key));
   const el=document.getElementById(elId);if(!el)return;
@@ -551,6 +563,8 @@ async function screenCVs(){
     if(!resp.ok){const err=await resp.json().catch(()=>({}));throw new Error(err.error||`HTTP ${resp.status}`);}
     const data=await resp.json();
     incCount(KEY_CV);updateCounter('cv-search-counter',KEY_CV);
+    // After successful CV analysis:
+gtag('event', 'cv_analysis_complete');
     renderCvResults(data.kandydaci||[]);
   }catch(err){errorBox.textContent=`Błąd: ${err.message}`;errorBox.style.display='block';}
   finally{btn.disabled=false;btn.textContent='Przeanalizuj CV →';loadingBox.style.display='none';}
@@ -661,6 +675,8 @@ async function generateQuestions(){
     if(!resp.ok){const err=await resp.json().catch(()=>({}));throw new Error(err.error||`HTTP ${resp.status}`);}
     const data=await resp.json();
     incCount(KEY_Q);updateCounter('q-search-counter',KEY_Q);
+    // After successful question generation:
+gtag('event', 'questions_generated');
     renderQuestions(data.pytania||[]);
   }catch(err){errorBox.textContent=`Błąd: ${err.message}`;errorBox.style.display='block';}
   finally{btn.disabled=false;btn.textContent='Generuj pytania →';loadingBox.style.display='none';}
