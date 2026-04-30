@@ -892,7 +892,8 @@ async function runMatch(){
   if(truncatedCount>0){truncWarn.textContent=`⚠ ${truncatedCount} CV zostało skróconych do analizy — wyniki mogą być niepełne dla długich dokumentów.`;truncWarn.style.display='block';}
   else{truncWarn.style.display='none';}
 
-  try{{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jobDesc,cvsText})});
+  try{
+    const resp=await fetch('/api/match',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jobDesc,cvsText})});
     if(!resp.ok){const err=await resp.json().catch(()=>({}));throw new Error(err.error||`HTTP ${resp.status}`);}
     const parsed=await resp.json();
     incCount(KEY_MATCH);updateCounter('match-search-counter',KEY_MATCH);
