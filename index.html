@@ -320,6 +320,37 @@ input:checked+.toggle-slider::before{transform:translateX(18px)}
 .export-btn{background:var(--green-dim);border:1px solid var(--green-border);color:var(--green);padding:7px 16px;border-radius:7px;font-size:.76rem;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s}
 .export-btn:hover{background:rgba(34,197,94,.2)}
 
+
+/* ══ PURCHASE MODAL ══ */
+#purchase-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(12px);z-index:10000;align-items:center;justify-content:center;padding:2rem}
+#purchase-overlay.active{display:flex}
+.purchase-modal{background:var(--surface);border:1px solid var(--border2);border-radius:24px;padding:2.5rem;max-width:520px;width:100%;position:relative;box-shadow:0 32px 80px rgba(0,0,0,.6)}
+.purchase-close{position:absolute;top:1.25rem;right:1.5rem;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--text3);line-height:1;transition:color .2s}
+.purchase-close:hover{color:var(--text)}
+.purchase-header{margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border)}
+.purchase-plan-name{font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin-bottom:.4rem}
+.purchase-title{font-family:'Sora',sans-serif;font-size:1.4rem;font-weight:800;letter-spacing:-.03em;color:var(--text)}
+.purchase-price-row{display:flex;align-items:baseline;gap:.5rem;margin-top:.4rem}
+.purchase-price{font-family:'Sora',sans-serif;font-size:2rem;font-weight:800;color:var(--text)}
+.purchase-period{font-size:.82rem;color:var(--text3)}
+.purchase-features{list-style:none;display:flex;flex-direction:column;gap:.5rem;margin-bottom:1.75rem}
+.purchase-features li{font-size:.82rem;color:var(--text2);display:flex;align-items:center;gap:.5rem}
+.purchase-features li::before{content:'✓';color:var(--mint);font-weight:800;flex-shrink:0}
+.purchase-fields{display:flex;flex-direction:column;gap:.75rem;margin-bottom:1.25rem}
+.purchase-field{display:flex;flex-direction:column;gap:.3rem}
+.purchase-label{font-size:.72rem;font-weight:700;color:var(--text3);letter-spacing:.05em;text-transform:uppercase}
+.purchase-input{width:100%;padding:11px 14px;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:.875rem;font-family:'Plus Jakarta Sans',sans-serif;outline:none;transition:border-color .2s}
+.purchase-input:focus{border-color:var(--blue)}
+.purchase-input::placeholder{color:var(--text3)}
+.purchase-submit{width:100%;padding:14px;background:linear-gradient(135deg,var(--blue) 0%,var(--blue2) 100%);color:#fff;border:none;border-radius:10px;font-family:'Sora',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:-.01em}
+.purchase-submit:hover{transform:translateY(-2px);box-shadow:0 12px 32px var(--blue-glow)}
+.purchase-note{font-size:.72rem;color:var(--text3);text-align:center;margin-top:.75rem;line-height:1.6}
+.purchase-error{color:var(--red);font-size:.78rem;margin-bottom:.75rem;display:none;background:var(--red-dim);border:1px solid var(--red-border);padding:8px 12px;border-radius:7px}
+.purchase-success{display:none;text-align:center;padding:1rem 0}
+.purchase-success-icon{font-size:2.5rem;margin-bottom:.75rem}
+.purchase-success-title{font-family:'Sora',sans-serif;font-size:1.2rem;font-weight:800;margin-bottom:.5rem}
+.purchase-success-msg{font-size:.85rem;color:var(--text2);line-height:1.7}
+
 /* ══ EMAIL GATE MODAL ══ */
 #gate-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(12px);z-index:10000;align-items:center;justify-content:center;padding:2rem}
 #gate-overlay.active{display:flex}
@@ -594,7 +625,7 @@ input:checked+.toggle-slider::before{transform:translateX(18px)}
           <li>Eksport CSV</li>
           <li>Wsparcie e-mail</li>
         </ul>
-        <button class="plan-btn plan-btn-primary" onclick="location.href='mailto:kontakt@znalezieni.pl?subject=Plan Startup'">Zamów dostęp</button>
+        <button class="plan-btn plan-btn-primary" onclick="openPurchaseModal()">Zamów dostęp →</button>
       </div>
 
     </div>
@@ -755,6 +786,54 @@ input:checked+.toggle-slider::before{transform:translateX(18px)}
   </div><!-- /.app-inner -->
 </div><!-- /#app-view -->
 
+
+<!-- ═══════════════════════ PURCHASE MODAL ═══════════════════════ -->
+<div id="purchase-overlay">
+  <div class="purchase-modal">
+    <button class="purchase-close" onclick="closePurchaseModal()">✕</button>
+    <div id="purchase-form-wrap">
+      <div class="purchase-header">
+        <div class="purchase-plan-name">Plan Startup</div>
+        <div class="purchase-title">Nieograniczone analizy rekrutacyjne</div>
+        <div class="purchase-price-row">
+          <span class="purchase-price">99 PLN</span>
+          <span class="purchase-period">/ miesiąc · bez karty kredytowej</span>
+        </div>
+      </div>
+      <ul class="purchase-features">
+        <li>Nieograniczone analizy przez cały miesiąc</li>
+        <li>Do 10 CV jednocześnie per analiza</li>
+        <li>Ranking + pytania screeningowe + dopasowanie</li>
+        <li>Anonimizacja RODO w zestawie</li>
+        <li>Eksport CSV bez limitu</li>
+        <li>Wsparcie e-mail w ciągu 24h</li>
+      </ul>
+      <div class="purchase-fields">
+        <div class="purchase-field">
+          <label class="purchase-label">Imię i nazwisko</label>
+          <input class="purchase-input" id="p-name" type="text" placeholder="Jan Kowalski">
+        </div>
+        <div class="purchase-field">
+          <label class="purchase-label">Firmowy adres email</label>
+          <input class="purchase-input" id="p-email" type="email" placeholder="jan@twojafirma.pl">
+        </div>
+        <div class="purchase-field">
+          <label class="purchase-label">Nazwa firmy</label>
+          <input class="purchase-input" id="p-company" type="text" placeholder="Nazwa Sp. z o.o.">
+        </div>
+      </div>
+      <div class="purchase-error" id="purchase-error"></div>
+      <button class="purchase-submit" onclick="submitPurchase()">Wyślij zapytanie o dostęp →</button>
+      <div class="purchase-note">Odezwiemy się w ciągu 24h z instrukcją płatności i aktywacją.<br>Bez automatycznych opłat — ręczna aktywacja każdego okresu.</div>
+    </div>
+    <div class="purchase-success" id="purchase-success">
+      <div class="purchase-success-icon">🎉</div>
+      <div class="purchase-success-title f-sora">Zapytanie wysłane!</div>
+      <div class="purchase-success-msg">Dziękujemy, <span id="purchase-success-name"></span>!<br>Odezwiemy się na <strong id="purchase-success-email"></strong><br>w ciągu 24 godzin roboczych z informacją o aktywacji.</div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════════ EMAIL GATE MODAL ═══════════════════════ -->
 <div id="gate-overlay">
   <div class="gate-modal">
@@ -860,15 +939,15 @@ function updateUsageBar(){
 
 // ── View switching ───────────────────────────────────────────
 function showHome(){
-  document.getElementById('home-view').style.display = '';
+  document.getElementById('home-view').style.display = 'block';
   document.getElementById('app-view').style.display = 'none';
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function showApp(){
   document.getElementById('home-view').style.display = 'none';
-  document.getElementById('app-view').style.display = '';
+  document.getElementById('app-view').style.display = 'block';
   updateUsageBar();
-  window.scrollTo({top:0});
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 // ── Escape helper ────────────────────────────────────────────
@@ -1334,6 +1413,56 @@ function resetPipeline(){
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
+
+// ══════════════════════════════════════════════════════════════
+//  PURCHASE MODAL
+// ══════════════════════════════════════════════════════════════
+function openPurchaseModal(){
+  document.getElementById('purchase-form-wrap').style.display = '';
+  document.getElementById('purchase-success').style.display = 'none';
+  document.getElementById('purchase-error').style.display = 'none';
+  document.getElementById('p-name').value = '';
+  document.getElementById('p-email').value = '';
+  document.getElementById('p-company').value = '';
+  document.getElementById('purchase-overlay').classList.add('active');
+}
+function closePurchaseModal(){
+  document.getElementById('purchase-overlay').classList.remove('active');
+}
+async function submitPurchase(){
+  const name    = document.getElementById('p-name').value.trim();
+  const email   = document.getElementById('p-email').value.trim();
+  const company = document.getElementById('p-company').value.trim();
+  const errEl   = document.getElementById('purchase-error');
+  errEl.style.display = 'none';
+  if(!name){ errEl.textContent = 'Podaj imię i nazwisko.'; errEl.style.display='block'; return; }
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ errEl.textContent = 'Podaj prawidłowy adres email.'; errEl.style.display='block'; return; }
+  if(!company){ errEl.textContent = 'Podaj nazwę firmy.'; errEl.style.display='block'; return; }
+
+  // mailto fallback — opens email client with pre-filled data
+  const subject = encodeURIComponent('znalezieni.pl — zapytanie o Plan Startup');
+  const body = encodeURIComponent(
+    'Dzień dobry,\n\n' +
+    'Chciałbym/chciałabym uzyskać dostęp do Planu Startup znalezieni.pl.\n\n' +
+    'Imię i nazwisko: ' + name + '\n' +
+    'Email: ' + email + '\n' +
+    'Firma: ' + company + '\n\n' +
+    'Proszę o informację dotyczącą aktywacji i płatności.\n\nPozdrawiam'
+  );
+  window.open('mailto:kontakt@znalezieni.pl?subject=' + subject + '&body=' + body, '_blank');
+
+  // Show success state
+  document.getElementById('purchase-form-wrap').style.display = 'none';
+  document.getElementById('purchase-success-name').textContent = name;
+  document.getElementById('purchase-success-email').textContent = email;
+  document.getElementById('purchase-success').style.display = 'block';
+  if(typeof gtag==='function') gtag('event','purchase_intent',{plan:'startup'});
+}
+
+document.getElementById('purchase-overlay').addEventListener('click', function(e){
+  if(e.target === this) closePurchaseModal();
+});
+
 // ══════════════════════════════════════════════════════════════
 //  EMAIL GATE
 // ══════════════════════════════════════════════════════════════
@@ -1410,7 +1539,7 @@ function rejectCookies(){
 function openPrivacy(){ document.getElementById('privacy-overlay').style.display='block'; document.body.style.overflow='hidden'; }
 function closePrivacy(){ document.getElementById('privacy-overlay').style.display='none'; document.body.style.overflow=''; }
 
-document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closePrivacy(); closeGate(); } });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closePrivacy(); closeGate(); closePurchaseModal(); } });
 
 (function initConsent(){
   const stored=localStorage.getItem(CONSENT_KEY);
