@@ -80,10 +80,13 @@ async function callAnthropic(body, retries = 3, delayMs = 2000) {
 }
 
 export default async function handler(req, res) {
-  // CORS — only allow own origin
+  // CORS — allow any variant of own domain (http/https, www/no-www) + Vercel previews
   const origin = req.headers['origin'] || '';
-  const allowed = process.env.ALLOWED_ORIGIN || 'https://znalezieni.pl';
-  if (origin && origin !== allowed && !origin.endsWith('.vercel.app')) {
+  const allowedDomain = process.env.ALLOWED_ORIGIN || 'znalezieni.pl';
+  const isAllowed = !origin
+    || origin.includes(allowedDomain)
+    || origin.endsWith('.vercel.app');
+  if (!isAllowed) {
     return res.status(403).json({ error: 'Forbidden' });
   }
 
