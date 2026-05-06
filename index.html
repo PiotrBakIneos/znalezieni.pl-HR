@@ -922,6 +922,7 @@ input:checked+.toggle-slider::before{transform:translateX(18px)}
 // ══════════════════════════════════════════════════════════════
 const USAGE_KEY  = 'znalezieni_usage_count';
 const TRIAL_KEY  = 'znalezieni_trial_email';
+const DEV_KEY    = 'znalezieni_dev_mode';   // set to '1' in console to bypass limit
 const FREE_LIMIT = 2;
 
 let uploadedJobText = '';
@@ -931,9 +932,10 @@ let _lastScreen = null, _lastQuestions = null, _lastMatch = null;
 
 // ── Usage helpers ────────────────────────────────────────────
 function getUsage(){ return parseInt(localStorage.getItem(USAGE_KEY)||'0'); }
-function incUsage(){ localStorage.setItem(USAGE_KEY, getUsage()+1); }
+function incUsage(){ if(!isDevMode()) localStorage.setItem(USAGE_KEY, getUsage()+1); }
 function hasTrial(){ return !!localStorage.getItem(TRIAL_KEY); }
-function isLimited(){ return getUsage() >= FREE_LIMIT && !hasTrial(); }
+function isDevMode(){ return localStorage.getItem(DEV_KEY)==='1'; }
+function isLimited(){ return !isDevMode() && getUsage() >= FREE_LIMIT && !hasTrial(); }
 
 function updateUsageBar(){
   const used = getUsage();
@@ -1064,12 +1066,16 @@ function removeCvFile(chipId, name){
   if(chip) chip.remove();
   const cleanName = name.replace(/\.pdf$/i,'');
   uploadedCvTexts = uploadedCvTexts.filter(f=>f.name!==cleanName);
+  rebuildCvTextarea(); // FIX: rebuild from array, not append-only
   updateCvCount();
 }
 function appendCvText(name, text){
+  // text already pushed to uploadedCvTexts by caller — just rebuild
+  rebuildCvTextarea();
+}
+function rebuildCvTextarea(){
   const ta = document.getElementById('cvs-text');
-  const ex = ta.value.trim();
-  ta.value = (ex?ex+'\n\n':'')+`--- CV: ${name} ---\n`+text.trim();
+  ta.value = uploadedCvTexts.map(cv=>`--- CV: ${cv.name} ---\n${cv.text.trim()}`).join('\n\n');
 }
 function updateCvCount(){
   const el = document.getElementById('cv-count-info');
@@ -1088,22 +1094,53 @@ let anonDone = false;
 
 document.getElementById('anon-toggle').addEventListener('change', async function(){
   if(!this.checked){ anonDone=false; document.getElementById('anon-confirm').style.display='none'; return; }
-  const cvsText = document.getElementById('cvs-text').value.trim();
-  if(!cvsText){ this.checked=false; showError('Dodaj CV przed anonimizacją.'); return; }
+  if(!uploadedCvTexts.length){ this.checked=false; showError('Dodaj CV przed anonimizacją.'); return; }
   const spinner = document.getElementById('anon-spinner');
   spinner.style.display='block'; this.disabled=true;
   try{
-    const resp = await fetch('/api/anonymize',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cvsText})});
-    if(!resp.ok){ const e=await resp.json().catch(()=>({})); throw new Error(e.error||`HTTP ${resp.status}`); }
-    const data = await resp.json();
-    document.getElementById('cvs-text').value = data.anonymizedText;
+    // FIX: anonymize in chunks of 3 CVs to avoid timeout with 10 CVs
+    const CHUNK = 3;
+    const totals = {imiona:0, emaile:0, telefony:0, adresy:0};
+    const anonCvs = [];
+
+    for(let i=0; i<uploadedCvTexts.length; i+=CHUNK){
+      const chunk = uploadedCvTexts.slice(i, i+CHUNK);
+      const chunkText = chunk.map(cv=>`--- CV: ${cv.name} ---\n${cv.text.trim()}`).join('\n\n');
+      const resp = await fetch('/api/anonymize',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cvsText:chunkText})});
+      if(!resp.ok){ const e=await resp.json().catch(()=>({})); throw new Error(e.error||`HTTP ${resp.status}`); }
+      const data = await resp.json();
+      const u = data.usunieto||{};
+      totals.imiona  += u.imiona||0;
+      totals.emaile  += u.emaile||0;
+      totals.telefony+= u.telefony||0;
+      totals.adresy  += u.adresy||0;
+      // Parse anonymized chunk back into individual CVs and update array
+      const anonText = data.anonymizedText||'';
+      const sepRe = /---\s*CV(?:\s+\d+)?:\s*(.+?)\s*---/gi;
+      const sepMatches = [...anonText.matchAll(sepRe)];
+      if(sepMatches.length===0){
+        // single CV in chunk
+        anonCvs.push({name: chunk[0].name, text: anonText.trim()});
+      } else {
+        for(let j=0;j<sepMatches.length;j++){
+          const name = sepMatches[j][1].trim();
+          const start = sepMatches[j].index + sepMatches[j][0].length;
+          const end = j+1<sepMatches.length ? sepMatches[j+1].index : anonText.length;
+          anonCvs.push({name, text: anonText.slice(start,end).trim()});
+        }
+      }
+    }
+
+    // Replace uploadedCvTexts with anonymized versions and rebuild textarea
+    uploadedCvTexts = anonCvs;
+    rebuildCvTextarea();
     anonDone = true;
-    const u = data.usunieto||{};
+
     const parts=[];
-    if(u.imiona) parts.push(`${u.imiona} imion/nazwisk`);
-    if(u.emaile) parts.push(`${u.emaile} emaili`);
-    if(u.telefony) parts.push(`${u.telefony} telefonów`);
-    if(u.adresy) parts.push(`${u.adresy} adresów`);
+    if(totals.imiona)   parts.push(`${totals.imiona} imion/nazwisk`);
+    if(totals.emaile)   parts.push(`${totals.emaile} emaili`);
+    if(totals.telefony) parts.push(`${totals.telefony} telefonów`);
+    if(totals.adresy)   parts.push(`${totals.adresy} adresów`);
     const conf = document.getElementById('anon-confirm');
     conf.innerHTML = `✓ <strong>Zanonimizowano pomyślnie.</strong> Usunięto: ${parts.length?parts.join(', '):'brak danych osobowych do usunięcia'}.`;
     conf.style.display='block';
@@ -1140,9 +1177,9 @@ async function runPipeline(){
 async function executeAnalysis(jobDesc, cvsText){
   pipelineRunning = true;
 
-  // Trim inputs
-  const {text:jd, trimmed:jTrimmed} = trimInput(jobDesc, 4000);
-  const {text:cvs, trimmed:cTrimmed} = trimInput(cvsText, 20000);
+  // Trim inputs — limits match server-side maxima (15000 job, 80000 cvs)
+  const {text:jd, trimmed:jTrimmed} = trimInput(jobDesc, 14000);
+  const {text:cvs, trimmed:cTrimmed} = trimInput(cvsText, 75000);
   if(jTrimmed||cTrimmed) document.getElementById('trunc-warn').style.display='block';
 
   // UI: show loading
