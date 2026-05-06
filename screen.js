@@ -11,14 +11,38 @@ Zwróć WYŁĄCZNIE obiekt JSON (bez żadnego tekstu przed ani po):
   "podsumowanie": "string (max 2 zdania)"
 }
 
-Zasady:
+Zasady ogólne:
 - Bądź bezwzględnie szczery — HR potrzebuje prawdy, nie dyplomacji
 - Wynik 8-10 tylko dla naprawdę silnych dopasowań
 - mocne_strony: max 3 krótkie frazy (nie całe zdania)
 - slabe_strony: max 3 krótkie frazy
-- Czerwona flaga: luki w CV, zbyt częste zmiany pracy, brak kluczowych wymagań (null jeśli brak)
 - Odpowiadaj wyłącznie w JSON, zero dodatkowego tekstu
-- Nie używaj znaków specjalnych ani nowych linii wewnątrz wartości JSON string`;
+- Nie używaj znaków specjalnych ani nowych linii wewnątrz wartości JSON string
+
+JĘZYKI — mapowanie na CEFR (FIX 4):
+Rozpoznaj polskie opisy i mapuj na poziom CEFR:
+- OJCZYSTY / NATIVE / MOTHER TONGUE → Native
+- BIEGŁY / PŁYNNY / C2 / C1 → C1-C2 (Advanced)
+- BARDZO DOBRY / ZAAWANSOWANY / B2 → B2 (Upper-intermediate)
+- DOBRY / KOMUNIKATYWNY / B1 → B1-B2 (Intermediate)
+- ŚREDNIO ZAAWANSOWANY / PODSTAWOWY / A2 / A1 → A1-B1 (Basic)
+W mocne_strony lub slabe_strony zawsze podawaj poziom CEFR obok polskiego opisu z CV.
+Jeśli zadeklarowany poziom jest zawyżony względem CEFR (np. "biegły" bez potwierdzenia), zaznacz to w slabe_strony.
+
+DOŚWIADCZENIE — obliczanie stażu (FIX 5):
+1. Wypisz każdą rolę z datami (rok rozpoczęcia – rok zakończenia lub "obecnie")
+2. Wykryj nakładające się okresy — licz je tylko raz
+3. Jeśli daty są niejasne lub brakuje ich — NIE zgaduj, zaznacz "brak daty" w czerwona_flaga
+4. Całkowity staż podaj w podsumowanie jako: "Łączne doświadczenie: X lat (bez nakładań)"
+
+CZERWONE FLAGI — detekcja (FIX 6):
+Skanuj pełny tekst CV i wykryj:
+- Jawne preferencje PRZECIW wymaganiom roli (np. "nie lubię pracy zespołowej" gdy rola wymaga teamwork)
+- Samoopisane ograniczenia sprzeczne z wymaganiami stanowiska
+- Luki w zatrudnieniu powyżej 6 miesięcy bez wyjaśnienia
+- Zmiany pracy częściej niż co 12 miesięcy (więcej niż 3 razy)
+- Brak kluczowych wymagań z ogłoszenia
+W polu czerwona_flaga: zacytuj DOKŁADNY fragment z CV który wywołał flagę (w cudzysłowie), a po nim wyjaśnienie. Jeśli brak flag: null`;
 
 // Parse individual CVs from the combined cvsText block.
 // Handles separator: --- CV: <name> --- or --- CV 1: <name> ---

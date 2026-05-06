@@ -12,14 +12,40 @@ Zwróć WYŁĄCZNIE obiekt JSON (bez żadnego tekstu przed ani po):
   "uzasadnienie_rekomendacji": "string (1 zdanie uzasadniające decyzję)"
 }
 
-Zasady:
+Zasady ogólne:
 - Bądź bezwzględnie szczery — HR potrzebuje prawdy, nie dyplomacji
 - procent_dopasowania: 80-100 tylko dla naprawdę silnych dopasowań, poniżej 40 dla słabych
 - WYSOKI: 70-100%, SREDNI: 40-69%, NISKI: 0-39%
 - co_pasuje: max 3 krótkie frazy (nie całe zdania) — konkretne elementy CV spełniające wymagania
 - czego_brakuje: max 3 krótkie frazy — brakujące umiejętności lub doświadczenie (pusta lista [] jeśli nic nie brakuje)
 - Odpowiadaj wyłącznie w JSON, zero dodatkowego tekstu
-- Nie używaj znaków specjalnych ani nowych linii wewnątrz wartości JSON string`;
+- Nie używaj znaków specjalnych ani nowych linii wewnątrz wartości JSON string
+
+JĘZYKI — mapowanie na CEFR (FIX 4):
+Rozpoznaj polskie opisy i mapuj na poziom CEFR:
+- OJCZYSTY / NATIVE / MOTHER TONGUE → Native
+- BIEGŁY / PŁYNNY / C2 / C1 → C1-C2 (Advanced)
+- BARDZO DOBRY / ZAAWANSOWANY / B2 → B2 (Upper-intermediate)
+- DOBRY / KOMUNIKATYWNY / B1 → B1-B2 (Intermediate)
+- ŚREDNIO ZAAWANSOWANY / PODSTAWOWY / A2 / A1 → A1-B1 (Basic)
+W co_pasuje lub czego_brakuje zawsze podawaj poziom CEFR obok polskiego opisu z CV.
+Jeśli zadeklarowany poziom jest zawyżony względem CEFR, dodaj do czego_brakuje jako: "Język X: deklarowany [opis] = realnie [CEFR] — niewystarczający".
+
+DOŚWIADCZENIE — obliczanie stażu (FIX 5):
+1. Wypisz każdą rolę z datami (rok rozpoczęcia – rok zakończenia lub "obecnie")
+2. Wykryj nakładające się okresy — licz je tylko raz
+3. Jeśli daty są niejasne lub brakuje ich — NIE zgaduj, dodaj do czego_brakuje: "Brak dat przy roli [nazwa]"
+4. Całkowity staż podaj w podsumowanie_dopasowania jako: "Łączne doświadczenie: X lat (bez nakładań)"
+
+CZERWONE FLAGI — detekcja (FIX 6):
+Skanuj pełny tekst CV i wykryj:
+- Jawne preferencje PRZECIW wymaganiom roli (np. "nie lubię pracy zespołowej" gdy rola wymaga teamwork)
+- Samoopisane ograniczenia sprzeczne z wymaganiami stanowiska
+- Luki w zatrudnieniu powyżej 6 miesięcy bez wyjaśnienia
+- Zmiany pracy częściej niż co 12 miesięcy (więcej niż 3 razy z rzędu)
+- Krytyczne braki wymagań z ogłoszenia
+Jeśli wykryto flagę: dodaj do czego_brakuje z prefiksem "🚩 " i zacytuj dokładny fragment z CV w cudzysłowie.
+Jeśli brak flag: czego_brakuje zawiera tylko faktycznie brakujące umiejętności.`;
 
 // Parse individual CVs from the combined cvsText block.
 // Handles separator: --- CV: <name> --- or --- CV 1: <name> ---
