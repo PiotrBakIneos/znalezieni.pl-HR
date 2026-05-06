@@ -680,6 +680,16 @@ input:checked+.toggle-slider::before{transform:translateX(18px)}
       <button class="btn-back" onclick="showHome()">← Wróć</button>
     </div>
 
+    <!-- MODE TABS -->
+    <div id="mode-tabs" style="display:flex;gap:8px;margin-bottom:1.25rem;background:var(--bg2);border-radius:12px;padding:6px;border:1px solid var(--border)">
+      <button id="tab-pipeline" onclick="switchMode('pipeline')" style="flex:1;padding:9px 16px;border-radius:8px;border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;font-weight:600;background:var(--blue);color:#fff;transition:all .2s">
+        🏆 Ranking kandydatów
+      </button>
+      <button id="tab-reverse" onclick="switchMode('reverse')" style="flex:1;padding:9px 16px;border-radius:8px;border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;font-weight:600;background:transparent;color:var(--text2);transition:all .2s">
+        🎯 Dopasuj CV do ofert
+      </button>
+    </div>
+
     <!-- USAGE BAR -->
     <div class="usage-bar" id="usage-bar">
       <div class="usage-dots">
@@ -797,6 +807,73 @@ input:checked+.toggle-slider::before{transform:translateX(18px)}
         <div class="result-section-body" id="sec-match-body"></div>
       </div>
     </div>
+
+  <!-- ═══ TOOL 4: REVERSE MATCH FORM ═══ -->
+  <div id="reverse-form" style="display:none">
+
+    <div class="pipeline-form">
+
+      <!-- Single CV upload -->
+      <div class="form-section">
+        <div class="form-label">👤 Twoje CV <span>PDF lub wklej tekst</span></div>
+        <div class="upload-zone" id="rcv-zone" onclick="document.getElementById('rcv-file-input').click()" ondragover="dzOver(event,'rcv-zone')" ondragleave="dzLeave('rcv-zone')" ondrop="rdzDrop(event)">
+          <input type="file" id="rcv-file-input" accept=".pdf" style="display:none">
+          <div class="upload-icon">📄</div>
+          <div class="upload-text"><strong>Kliknij lub przeciągnij PDF z CV</strong></div>
+          <div class="upload-limit">Maks. 5 MB · 30 stron · 1 plik</div>
+        </div>
+        <div id="rcv-file-chips" class="file-chips"></div>
+        <textarea id="rcv-text" rows="4" placeholder="...lub wklej tu treść swojego CV" style="width:100%;margin-top:.75rem;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;line-height:1.65;resize:vertical;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+      </div>
+
+      <!-- Multiple job postings -->
+      <div class="form-section">
+        <div class="form-label">📋 Ogłoszenia o pracę <span>do 10 · PDF lub wklej tekst</span></div>
+        <div class="upload-zone" id="rjobs-zone" onclick="document.getElementById('rjobs-file-input').click()" ondragover="dzOver(event,'rjobs-zone')" ondragleave="dzLeave('rjobs-zone')" ondrop="rjobsDrop(event)">
+          <input type="file" id="rjobs-file-input" accept=".pdf" multiple style="display:none">
+          <div class="upload-icon">📋</div>
+          <div class="upload-text"><strong>Kliknij lub przeciągnij ogłoszenia PDF</strong></div>
+          <div class="upload-limit">Maks. 10 plików · 5 MB każdy</div>
+        </div>
+        <div id="rjobs-file-chips" class="file-chips"></div>
+        <div id="rjobs-count-info" style="font-size:.75rem;color:var(--text3);margin-top:.5rem;display:none"></div>
+        <textarea id="rjobs-text" rows="5" placeholder="...lub wklej ogłoszenia oddzielone separatorem:&#10;--- Ogłoszenie: Nazwa stanowiska ---&#10;(treść ogłoszenia)&#10;--- Ogłoszenie: Druga rola ---&#10;(treść ogłoszenia)" style="width:100%;margin-top:.75rem;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;line-height:1.65;resize:vertical;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+      </div>
+
+      <div class="truncation-warn" id="rtrunc-warn" style="display:none">⚠ Tekst CV lub ogłoszenia został skrócony, aby zmieścić się w limicie analizy.</div>
+
+      <button class="analyze-btn" id="ranalyze-btn" onclick="runReverse()">
+        <div class="btn-spinner" id="rbtn-spinner"></div>
+        <span id="ranalyze-label">Dopasuj CV do ofert</span>
+        <span class="btn-arrow" id="ranalyze-arrow">→</span>
+      </button>
+    </div>
+
+    <!-- LOADING -->
+    <div class="loading-panel" id="rloading-panel" style="display:none">
+      <div class="big-spinner"></div>
+      <div class="loading-title">Analizuję dopasowanie…</div>
+      <div class="loading-sub">Każde ogłoszenie analizowane osobno</div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="results-panel" id="rresults-panel" style="display:none">
+      <div class="results-top">
+        <div class="results-title-h f-sora">Ranking ofert dla Twojego CV</div>
+        <button class="new-analysis-btn" onclick="resetReverse()">+ Nowa analiza</button>
+      </div>
+      <div class="result-section open" id="sec-reverse">
+        <div class="result-section-header" onclick="toggleSection('sec-reverse')">
+          <span class="result-section-icon">🎯</span>
+          <span class="result-section-title f-sora">Dopasowanie do ofert</span>
+          <span class="result-section-count loading" id="sec-reverse-count">Ładuję…</span>
+          <span class="result-section-chevron">▼</span>
+        </div>
+        <div class="result-section-body" id="sec-reverse-body"></div>
+      </div>
+    </div>
+
+  </div><!-- /#reverse-form -->
 
   </div><!-- /.app-inner -->
 </div><!-- /#app-view -->
@@ -1623,6 +1700,263 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closePrivacy(); 
 
 // Init
 updateUsageBar();
+
+// ══════════════════════════════════════════════════════════════
+//  TOOL 4 — REVERSE MATCH
+// ══════════════════════════════════════════════════════════════
+
+let reverseRunning = false;
+let uploadedCvReverseText = '';
+let uploadedJobTexts = [];   // [{title, text}]
+let _lastReverse = null;
+
+// ── Mode switcher ────────────────────────────────────────────
+function switchMode(mode) {
+  const isPipeline = mode === 'pipeline';
+  // Pipeline elements
+  document.getElementById('pipeline-form').style.display   = isPipeline ? '' : 'none';
+  document.getElementById('loading-panel').style.display   = 'none';
+  document.getElementById('results-panel').style.display   = 'none';
+  // Reverse elements
+  document.getElementById('reverse-form').style.display    = isPipeline ? 'none' : '';
+  // Tab styles
+  const tabPipe = document.getElementById('tab-pipeline');
+  const tabRev  = document.getElementById('tab-reverse');
+  tabPipe.style.background = isPipeline ? 'var(--blue)'  : 'transparent';
+  tabPipe.style.color      = isPipeline ? '#fff'         : 'var(--text2)';
+  tabRev.style.background  = isPipeline ? 'transparent'  : 'var(--blue)';
+  tabRev.style.color       = isPipeline ? 'var(--text2)' : '#fff';
+}
+
+// ── CV upload for reverse ────────────────────────────────────
+document.getElementById('rcv-file-input').addEventListener('change', e => {
+  if (e.target.files[0]) handleRcvFile(e.target.files[0]);
+});
+function rdzDrop(e) {
+  e.preventDefault(); document.getElementById('rcv-zone').classList.remove('drag-over');
+  const f = Array.from(e.dataTransfer.files).find(f => f.name.toLowerCase().endsWith('.pdf'));
+  if (f) handleRcvFile(f);
+}
+async function handleRcvFile(file) {
+  const chips = document.getElementById('rcv-file-chips');
+  chips.innerHTML = `<div class="file-chip processing"><span>📄</span><span class="fn">${esc(file.name)}</span><span class="fs">🔄 Odczytuję…</span></div>`;
+  document.getElementById('rcv-file-input').value = '';
+  try {
+    const text = await extractPdfText(file);
+    uploadedCvReverseText = text.trim();
+    document.getElementById('rcv-text').value = uploadedCvReverseText;
+    chips.innerHTML = `<div class="file-chip done"><span>📄</span><span class="fn">${esc(file.name)}</span><span class="fs">✓ Załadowano</span><button class="fr" onclick="clearRcvFile()">✕</button></div>`;
+  } catch(err) {
+    chips.innerHTML = `<div class="file-chip error"><span>📄</span><span class="fn">${esc(file.name)}</span><span class="fs">✗ ${esc(err.message)}</span></div>`;
+  }
+}
+function clearRcvFile() {
+  document.getElementById('rcv-file-chips').innerHTML = '';
+  document.getElementById('rcv-text').value = '';
+  uploadedCvReverseText = '';
+}
+
+// ── Job postings upload for reverse ─────────────────────────
+document.getElementById('rjobs-file-input').addEventListener('change', e => handleRJobFiles(Array.from(e.target.files)));
+function rjobsDrop(e) {
+  e.preventDefault(); document.getElementById('rjobs-zone').classList.remove('drag-over');
+  handleRJobFiles(Array.from(e.dataTransfer.files).filter(f => f.name.toLowerCase().endsWith('.pdf')));
+}
+async function handleRJobFiles(files) {
+  const MAX = 10;
+  for (const file of files) {
+    if (uploadedJobTexts.length >= MAX) {
+      showError('Maksymalnie 10 ogłoszeń — usuń jedno żeby dodać kolejne.'); break;
+    }
+    const chipId = 'rjob-' + sid(file.name);
+    const container = document.getElementById('rjobs-file-chips');
+    const chip = document.createElement('div');
+    chip.id = chipId; chip.className = 'file-chip processing';
+    const safeName = file.name.replace(/'/g, "\'");
+    const title = file.name.replace(/\.pdf$/i, '');
+    chip.innerHTML = `<span>📋</span><span class="fn" title="${esc(file.name)}">${esc(file.name)}</span><span class="fs">🔄 Odczytuję…</span><button class="fr" onclick="removeRJobFile('${sid(file.name)}','${safeName}')">✕</button>`;
+    container.appendChild(chip);
+    try {
+      const text = await extractPdfText(file);
+      chip.className = 'file-chip done';
+      chip.querySelector('.fs').textContent = '✓ Gotowe';
+      uploadedJobTexts.push({ title, text });
+      rebuildJobsTextarea();
+      updateRJobsCount();
+    } catch(e) {
+      chip.className = 'file-chip error';
+      chip.querySelector('.fs').textContent = '✗ ' + e.message;
+    }
+  }
+  document.getElementById('rjobs-file-input').value = '';
+}
+function removeRJobFile(chipId, name) {
+  const chip = document.getElementById('rjob-' + chipId);
+  if (chip) chip.remove();
+  const title = name.replace(/\.pdf$/i, '');
+  uploadedJobTexts = uploadedJobTexts.filter(j => j.title !== title);
+  rebuildJobsTextarea();
+  updateRJobsCount();
+}
+function rebuildJobsTextarea() {
+  const ta = document.getElementById('rjobs-text');
+  ta.value = uploadedJobTexts.map(j => `--- Ogłoszenie: ${j.title} ---
+${j.text.trim()}`).join('
+
+');
+}
+function updateRJobsCount() {
+  const el = document.getElementById('rjobs-count-info');
+  if (uploadedJobTexts.length > 0) {
+    el.textContent = `${uploadedJobTexts.length}/10 ogłoszeń załadowanych`;
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+// ── Run reverse analysis ─────────────────────────────────────
+async function runReverse() {
+  if (reverseRunning) return;
+
+  hideError();
+  const cvText   = document.getElementById('rcv-text').value.trim();
+  const jobsText = document.getElementById('rjobs-text').value.trim();
+
+  if (!cvText)   { showError('Wgraj lub wklej swoje CV.'); return; }
+  if (!jobsText) { showError('Dodaj co najmniej jedno ogłoszenie o pracę.'); return; }
+
+  if (isLimited()) { openGate(); return; }
+
+  reverseRunning = true;
+  const {text: cv,   trimmed: cvTrimmed}   = trimInput(cvText,   18000);
+  const {text: jobs, trimmed: jobsTrimmed} = trimInput(jobsText, 75000);
+  if (cvTrimmed || jobsTrimmed) document.getElementById('rtrunc-warn').style.display = 'block';
+
+  // UI
+  document.getElementById('ranalyze-btn').disabled = true;
+  document.getElementById('rbtn-spinner').style.display = 'block';
+  document.getElementById('ranalyze-label').textContent = 'Analizuję…';
+  document.getElementById('ranalyze-arrow').style.display = 'none';
+  document.getElementById('rloading-panel').style.display = 'block';
+  document.getElementById('rresults-panel').style.display = 'none';
+  document.getElementById('sec-reverse-count').textContent = 'Ładuję…';
+  document.getElementById('sec-reverse-count').className = 'result-section-count loading';
+
+  try {
+    const resp = await fetch('/api/reverse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cvText: cv, jobsText: jobs })
+    });
+    if (!resp.ok) { const e = await resp.json().catch(() => ({})); throw new Error(e.error || `HTTP ${resp.status}`); }
+    const data = await resp.json();
+
+    incUsage(); updateUsageBar();
+    renderReverse(data);
+    document.getElementById('rresults-panel').style.display = '';
+    document.getElementById('rresults-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (typeof gtag === 'function') gtag('event', 'reverse_complete');
+  } catch(err) {
+    showError(err.message);
+  } finally {
+    reverseRunning = false;
+    document.getElementById('rloading-panel').style.display = 'none';
+    document.getElementById('ranalyze-btn').disabled = false;
+    document.getElementById('rbtn-spinner').style.display = 'none';
+    document.getElementById('ranalyze-label').textContent = 'Dopasuj CV do ofert';
+    document.getElementById('ranalyze-arrow').style.display = '';
+  }
+}
+
+// ── Render reverse results ───────────────────────────────────
+function renderReverse(data) {
+  const body  = document.getElementById('sec-reverse-body');
+  const count = document.getElementById('sec-reverse-count');
+  const oferty = data.oferty || [];
+  _lastReverse = oferty;
+
+  count.textContent = oferty.length + ' ofert';
+  count.className = 'result-section-count';
+
+  const counts = { 'APLIKUJ': 0, 'ROZWAŻ': 0, 'POMIŃ': 0 };
+  oferty.forEach(o => { if (counts[o.rekomendacja] !== undefined) counts[o.rekomendacja]++; });
+
+  let html = `
+  <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
+    <button class="export-btn" onclick="exportReverseCSV()">↓ Eksportuj CSV</button>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card" style="background:var(--green-dim);border-color:var(--green-border)"><div class="stat-num" style="color:var(--green)">${counts['APLIKUJ']}</div><div class="stat-label" style="color:var(--green)">Aplikuj</div></div>
+    <div class="stat-card" style="background:var(--amber-dim);border-color:var(--amber-border)"><div class="stat-num" style="color:var(--amber)">${counts['ROZWAŻ']}</div><div class="stat-label" style="color:var(--amber)">Rozważ</div></div>
+    <div class="stat-card" style="background:var(--red-dim);border-color:var(--red-border)"><div class="stat-num" style="color:var(--red)">${counts['POMIŃ']}</div><div class="stat-label" style="color:var(--red)">Pomiń</div></div>
+  </div>`;
+
+  oferty.forEach((o, i) => {
+    const c = reverseColor(o.rekomendacja);
+    const pct = o.procent_dopasowania || 0;
+    const barColor = pct >= 70 ? 'var(--green)' : pct >= 40 ? 'var(--amber)' : 'var(--red)';
+    const pasuje  = (o.co_pasuje    || []).map(m => `<div class="si" style="color:var(--green)">✓ ${esc(m)}</div>`).join('');
+    const brakuje = (o.czego_brakuje || []).map(m => `<div class="brakuje-item">✗ ${esc(m)}</div>`).join('');
+
+    html += `<div class="candidate-card" style="border-left-color:${c.border};border-color:var(--border)">
+      <div class="card-top">
+        <div style="flex:1">
+          <div class="cname">${i + 1}. ${esc(o.tytul)}</div>
+          <div class="csummary">${esc(o.podsumowanie)}</div>
+          <div class="zgodnosc-block">
+            <div>
+              <div class="zgodnosc-label">ZGODNOŚĆ</div>
+              <div class="zgodnosc-pct" style="color:${barColor}">${pct}%</div>
+            </div>
+            <div class="zgodnosc-bar"><div class="zgodnosc-fill" style="width:${pct}%;background:${barColor}"></div></div>
+          </div>
+        </div>
+        <div class="card-badges">
+          <div class="badge" style="background:${c.bg};color:${c.color};border-color:${c.border}">${esc(o.rekomendacja)}</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div>${pasuje ? `<div class="col-label" style="color:var(--green)">Co pasuje</div>${pasuje}` : ''}</div>
+        <div>${brakuje ? `<div class="brakuje-block"><div class="brakuje-label">BRAKUJE</div>${brakuje}</div>` : ''}</div>
+      </div>
+      <div class="ai-disclaimer">⚠️ Wynik wygenerowany przez AI. Traktuj jako wskazówkę, nie jako ostateczną decyzję o aplikacji.</div>
+    </div>`;
+  });
+
+  body.innerHTML = html;
+}
+
+function reverseColor(rec) {
+  if (rec === 'APLIKUJ') return { bg: 'var(--green-dim)', color: 'var(--green)', border: 'var(--green-border)' };
+  if (rec === 'ROZWAŻ')  return { bg: 'var(--amber-dim)', color: 'var(--amber)', border: 'var(--amber-border)' };
+  return { bg: 'var(--red-dim)', color: 'var(--red)', border: 'var(--red-border)' };
+}
+
+function exportReverseCSV() {
+  if (!_lastReverse) return;
+  const h = 'Stanowisko,Dopasowanie %,Poziom,Rekomendacja,Co pasuje,Czego brakuje
+';
+  const rows = _lastReverse.map(o =>
+    `"${o.tytul}","${o.procent_dopasowania}%","${o.poziom}","${o.rekomendacja}","${(o.co_pasuje || []).join('; ')}","${(o.czego_brakuje || []).join('; ')}"`
+  ).join('
+');
+  downloadCSV('﻿' + h + rows, 'dopasowanie_ofert.csv');
+}
+
+function resetReverse() {
+  document.getElementById('rcv-text').value = '';
+  document.getElementById('rjobs-text').value = '';
+  document.getElementById('rcv-file-chips').innerHTML = '';
+  document.getElementById('rjobs-file-chips').innerHTML = '';
+  uploadedCvReverseText = ''; uploadedJobTexts = [];
+  document.getElementById('rtrunc-warn').style.display = 'none';
+  document.getElementById('rjobs-count-info').style.display = 'none';
+  document.getElementById('rresults-panel').style.display = 'none';
+  document.getElementById('rloading-panel').style.display = 'none';
+  hideError();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 </script>
 </body>
 </html>
