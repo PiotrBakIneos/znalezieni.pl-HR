@@ -320,6 +320,21 @@ input:checked+.toggle-slider::before{transform:translateX(18px)}
 .export-btn{background:var(--green-dim);border:1px solid var(--green-border);color:var(--green);padding:7px 16px;border-radius:7px;font-size:.76rem;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s}
 .export-btn:hover{background:rgba(34,197,94,.2)}
 
+/* ZGODNOŚĆ — prominent match score */
+.zgodnosc-block{display:flex;align-items:center;gap:14px;margin:10px 0 4px}
+.zgodnosc-pct{font-family:'Sora',sans-serif;font-size:2rem;font-weight:800;line-height:1}
+.zgodnosc-label{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.6;margin-bottom:2px}
+.zgodnosc-bar{flex:1;height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;max-width:180px}
+.zgodnosc-fill{height:100%;border-radius:3px;transition:width .6s}
+
+/* BRAKUJE — missing skills block */
+.brakuje-block{margin-top:10px}
+.brakuje-label{font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--amber);margin-bottom:5px;opacity:.85}
+.brakuje-item{font-size:.8rem;padding:2px 0;line-height:1.5;color:var(--amber)}
+
+/* AI ACT DISCLAIMER */
+.ai-disclaimer{margin-top:12px;padding:8px 12px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:7px;font-size:.72rem;color:var(--text3);line-height:1.55}
+
 
 /* ══ PURCHASE MODAL ══ */
 #purchase-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(12px);z-index:10000;align-items:center;justify-content:center;padding:2rem}
@@ -1244,12 +1259,27 @@ function renderScreen(result){
   </div>`;
   kandydaci.forEach((k,i)=>{
     const c = screenColor(k.rekomendacja);
+    const pct = Math.round((k.wynik||0) * 10);
+    const barColor = pct>=70?'var(--green)':pct>=40?'var(--amber)':'var(--red)';
     const str=(k.mocne_strony||[]).map(m=>`<div class="si" style="color:var(--green)">✓ ${esc(m)}</div>`).join('');
     const wk=(k.slabe_strony||[]).map(s=>`<div class="wi" style="color:var(--text2)">✗ ${esc(s)}</div>`).join('');
+    const brakuje=(k.slabe_strony||[]).length>0
+      ? `<div class="brakuje-block"><div class="brakuje-label">BRAKUJE</div>${(k.slabe_strony||[]).map(s=>`<div class="brakuje-item">✗ ${esc(s)}</div>`).join('')}</div>`
+      : '';
     const flag=k.czerwona_flaga?`<div class="red-flag">⚠ ${esc(k.czerwona_flaga)}</div>`:'';
     html+=`<div class="candidate-card" style="border-left-color:${c.border};border-color:var(--border)">
       <div class="card-top">
-        <div><div class="cname">${i+1}. ${esc(k.imie_nazwisko)}</div><div class="csummary">${esc(k.podsumowanie)}</div></div>
+        <div style="flex:1">
+          <div class="cname">${i+1}. ${esc(k.imie_nazwisko)}</div>
+          <div class="csummary">${esc(k.podsumowanie)}</div>
+          <div class="zgodnosc-block">
+            <div>
+              <div class="zgodnosc-label">ZGODNOŚĆ</div>
+              <div class="zgodnosc-pct" style="color:${barColor}">${pct}%</div>
+            </div>
+            <div class="zgodnosc-bar"><div class="zgodnosc-fill" style="width:${pct}%;background:${barColor}"></div></div>
+          </div>
+        </div>
         <div class="card-badges">
           <div class="badge" style="background:${c.bg};color:${c.color};border-color:${c.border}">${esc(k.rekomendacja)}</div>
           <div class="badge" style="background:var(--surface2);color:var(--text);border-color:var(--border)">${k.wynik}/10</div>
@@ -1257,8 +1287,9 @@ function renderScreen(result){
       </div>
       <div class="card-body">
         <div><div class="col-label" style="color:var(--green)">Mocne strony</div>${str}</div>
-        <div>${wk?`<div class="col-label" style="color:var(--text3)">Słabe strony</div>${wk}`:''}${flag}</div>
+        <div>${wk?`<div class="col-label" style="color:var(--text3)">Słabe strony</div>${wk}`:''}${brakuje}${flag}</div>
       </div>
+      <div class="ai-disclaimer">⚠️ Wynik wygenerowany przez AI. Narzędzie wspiera proces rekrutacji — ostateczna decyzja należy zawsze do rekrutera. Kandydaci powinni być poinformowani o wykorzystaniu AI w procesie rekrutacji.</div>
     </div>`;
   });
   body.innerHTML=html;
@@ -1298,6 +1329,7 @@ function renderQuestions(result){
       <div class="q-num">Pytanie ${i+1}</div>
       <div class="q-text">${esc(p.pytanie)}</div>
       <div class="q-meta">${biasy}<span class="q-tag q-why">${esc(p.uzasadnienie)}</span></div>
+      <div class="ai-disclaimer" style="margin-top:10px">⚠️ Pytanie wygenerowane przez AI. Przed użyciem w rekrutacji zweryfikuj zgodność z polityką firmy i przepisami prawa.</div>
     </div>`;
   });
   body.innerHTML=html;
@@ -1343,7 +1375,7 @@ function renderMatch(result){
   sorted.forEach((k,i)=>{
     const c = matchColor(k.poziom);
     const pasuje=(k.co_pasuje||[]).map(m=>`<div class="si" style="color:var(--green)">✓ ${esc(m)}</div>`).join('');
-    const brakuje=(k.czego_brakuje||[]).map(m=>`<div class="wi" style="color:var(--text2)">✗ ${esc(m)}</div>`).join('');
+    const brakuje=(k.czego_brakuje||[]).map(m=>`<div class="brakuje-item">✗ ${esc(m)}</div>`).join('');
     const pct=k.procent_dopasowania||0;
     const barColor=pct>=70?'var(--green)':pct>=40?'var(--amber)':'var(--red)';
     html+=`<div class="candidate-card" style="border-left-color:${c.border};border-color:var(--border)">
@@ -1351,9 +1383,12 @@ function renderMatch(result){
         <div style="flex:1">
           <div class="cname">${i+1}. ${esc(k.imie_nazwisko)}</div>
           <div class="csummary">${esc(k.podsumowanie_dopasowania)}</div>
-          <div class="progress-wrap">
-            <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${barColor}"></div></div>
-            <div class="progress-label">${pct}% dopasowania</div>
+          <div class="zgodnosc-block">
+            <div>
+              <div class="zgodnosc-label">ZGODNOŚĆ</div>
+              <div class="zgodnosc-pct" style="color:${barColor}">${pct}%</div>
+            </div>
+            <div class="zgodnosc-bar"><div class="zgodnosc-fill" style="width:${pct}%;background:${barColor}"></div></div>
           </div>
         </div>
         <div class="card-badges">
@@ -1363,10 +1398,11 @@ function renderMatch(result){
       <div class="card-body">
         <div>${pasuje?`<div class="col-label" style="color:var(--green)">Co pasuje</div>${pasuje}`:''}</div>
         <div>
-          ${brakuje?`<div class="col-label" style="color:var(--text3)">Czego brakuje</div>${brakuje}`:''}
+          ${brakuje?`<div class="brakuje-block"><div class="brakuje-label">BRAKUJE</div>${brakuje}</div>`:''}
           ${k.uzasadnienie_rekomendacji?`<div class="red-flag" style="background:${c.bg};border-color:${c.border};color:${c.color}">💬 ${esc(k.uzasadnienie_rekomendacji)}</div>`:''}
         </div>
       </div>
+      <div class="ai-disclaimer">⚠️ Wynik wygenerowany przez AI. Narzędzie wspiera proces rekrutacji — ostateczna decyzja należy zawsze do rekrutera. Kandydaci powinni być poinformowani o wykorzystaniu AI w procesie rekrutacji.</div>
     </div>`;
   });
   body.innerHTML=html;
