@@ -1805,10 +1805,7 @@ function removeRJobFile(chipId, name) {
 }
 function rebuildJobsTextarea() {
   const ta = document.getElementById('rjobs-text');
-  ta.value = uploadedJobTexts.map(j => `--- Ogłoszenie: ${j.title} ---
-${j.text.trim()}`).join('
-
-');
+  ta.value = uploadedJobTexts.map(j => `--- Ogłoszenie: ${j.title} ---\n${j.text.trim()}`).join('\n\n');
 }
 function updateRJobsCount() {
   const el = document.getElementById('rjobs-count-info');
@@ -1940,12 +1937,10 @@ function reverseColor(rec) {
 
 function exportReverseCSV() {
   if (!_lastReverse) return;
-  const h = 'Stanowisko,Dopasowanie %,Poziom,Rekomendacja,Co pasuje,Czego brakuje
-';
+  const h = 'Stanowisko,Dopasowanie %,Poziom,Rekomendacja,Co pasuje,Czego brakuje\n';
   const rows = _lastReverse.map(o =>
     `"${o.tytul}","${o.procent_dopasowania}%","${o.poziom}","${o.rekomendacja}","${(o.co_pasuje || []).join('; ')}","${(o.czego_brakuje || []).join('; ')}"`
-  ).join('
-');
+  ).join('\n');
   downloadCSV('﻿' + h + rows, 'dopasowanie_ofert.csv');
 }
 
