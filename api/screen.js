@@ -1,30 +1,73 @@
-const SYSTEM_PROMPT = `Jesteś ekspertem rekrutera z 15-letnim doświadczeniem w Polsce. Analizujesz CV kandydatów względem ogłoszenia o pracę.
+const SYSTEM_PROMPT = `Jesteś ekspertem rekrutera z 15-letnim doświadczeniem w Polsce. Analizujesz CV kandydata względem ogłoszenia o pracę.
 
-Dla każdego kandydata zwróć WYŁĄCZNIE obiekt JSON (bez żadnego tekstu przed ani po):
+Zwróć WYŁĄCZNIE obiekt JSON (bez żadnego tekstu przed ani po):
 
 {
-  "kandydaci": [
-    {
-      "imie_nazwisko": "string",
-      "wynik": number (1-10),
-      "mocne_strony": ["string", "string", "string"],
-      "slabe_strony": ["string"],
-      "czerwona_flaga": "string lub null",
-      "rekomendacja": "TAK" | "MOZE" | "NIE",
-      "podsumowanie": "string (max 2 zdania)"
-    }
-  ]
+  "wynik": number (1-10),
+  "procent_dopasowania": number (0-100),
+  "rekomendacja": "ZAPROŚ" | "ROZWAŻ" | "ODRZUĆ",
+  "podsumowanie": "string (max 2 zdania — dlaczego pasuje lub nie, z łącznym stażem)",
+  "mocne_strony": ["string", "string", "string"],
+  "czego_brakuje": ["string", "string"],
+  "czerwona_flaga": "string lub null"
 }
 
-Zasady:
+Zasady ogólne:
 - Bądź bezwzględnie szczery — HR potrzebuje prawdy, nie dyplomacji
-- Wynik 8-10 tylko dla naprawdę silnych dopasowań
-- mocne_strony: max 3 krótkie frazy (nie całe zdania)
-- slabe_strony: max 3 krótkie frazy
-- Czerwona flaga: luki w CV, zbyt częste zmiany pracy, brak kluczowych wymagań (null jeśli brak)
-- Sortuj od najwyższego wyniku do najniższego
+- wynik: 8-10 tylko dla naprawdę silnych dopasowań
+- procent_dopasowania: wyraź jako % spełnionych wymagań ogłoszenia. 80-100 tylko dla naprawdę silnych dopasowań, poniżej 40 dla słabych. Musi być spójny z wynik (wynik 8 ≈ 80%)
+- ZAPROŚ: procent_dopasowania ≥70, ROZWAŻ: 40-69, ODRZUĆ: <40
+- mocne_strony: max 3 krótkie frazy (nie całe zdania) — konkretne elementy CV spełniające wymagania
+- czego_brakuje: max 3 krótkie frazy — brakujące umiejętności lub doświadczenie ([] jeśli nic nie brakuje)
 - Odpowiadaj wyłącznie w JSON, zero dodatkowego tekstu
-- Nie używaj znaków specjalnych ani nowych linii wewnątrz wartości JSON string`;
+- Nie używaj znaków specjalnych ani nowych linii wewnątrz wartości JSON string
+
+JĘZYKI — mapowanie na CEFR:
+Rozpoznaj polskie opisy i mapuj na poziom CEFR:
+- OJCZYSTY / NATIVE / MOTHER TONGUE → Native
+- BIEGŁY / PŁYNNY / C2 / C1 → C1-C2 (Advanced)
+- BARDZO DOBRY / ZAAWANSOWANY / B2 → B2 (Upper-intermediate)
+- DOBRY / KOMUNIKATYWNY / B1 → B1-B2 (Intermediate)
+- ŚREDNIO ZAAWANSOWANY / PODSTAWOWY / A2 / A1 → A1-B1 (Basic)
+W mocne_strony lub czego_brakuje zawsze podawaj poziom CEFR obok polskiego opisu z CV.
+Jeśli zadeklarowany poziom jest zawyżony względem CEFR, zaznacz to w czego_brakuje.
+
+DOŚWIADCZENIE — obliczanie stażu:
+1. Wypisz każdą rolę z datami (rok rozpoczęcia – rok zakończenia lub "obecnie")
+2. Wykryj nakładające się okresy — licz je tylko raz
+3. Jeśli daty są niejasne lub brakuje ich — NIE zgaduj, zaznacz "brak daty" w czerwona_flaga
+4. Całkowity staż podaj w podsumowanie jako: "Łączne doświadczenie: X lat (bez nakładań)"
+
+CZERWONE FLAGI — detekcja:
+Skanuj pełny tekst CV i wykryj:
+- Jawne preferencje PRZECIW wymaganiom roli
+- Samoopisane ograniczenia sprzeczne z wymaganiami stanowiska
+- Luki w zatrudnieniu powyżej 6 miesięcy bez wyjaśnienia
+- Zmiany pracy częściej niż co 12 miesięcy (więcej niż 3 razy)
+- Brak kluczowych wymagań z ogłoszenia
+W polu czerwona_flaga: zacytuj DOKŁADNY fragment z CV który wywołał flagę (w cudzysłowie), a po nim wyjaśnienie. Jeśli brak flag: null`;
+
+// Parse individual CVs from the combined cvsText block.
+// Handles separator: --- CV: <name> --- or --- CV 1: <name> ---
+// Falls back to treating entire block as one anonymous CV.
+function parseCVs(cvsText) {
+  const separatorRegex = /---\s*CV(?:\s+\d+)?:\s*(.+?)\s*---/gi;
+  const matches = [...cvsText.matchAll(separatorRegex)];
+
+  if (matches.length === 0) {
+    return [{ name: 'Kandydat', text: cvsText.trim() }];
+  }
+
+  const cvs = [];
+  for (let i = 0; i < matches.length; i++) {
+    const name = matches[i][1].trim();
+    const start = matches[i].index + matches[i][0].length;
+    const end = i + 1 < matches.length ? matches[i + 1].index : cvsText.length;
+    const text = cvsText.slice(start, end).trim();
+    if (text) cvs.push({ name, text });
+  }
+  return cvs;
+}
 
 function repairJson(str) {
   const stack = [];
@@ -76,6 +119,30 @@ async function callAnthropic(body, retries = 3, delayMs = 2000) {
   }
 }
 
+// Analyze a single CV in complete isolation — no label, no other candidates in context.
+async function analyzeOneCv(jobDesc, cvText) {
+  const data = await callAnthropic({
+    model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
+    max_tokens: 1500,
+    temperature: 0,          // BIAS FIX: deterministic, position-independent scoring
+    system: SYSTEM_PROMPT,
+    messages: [{
+      role: 'user',
+      // BIAS FIX: CV sent without any label or number — pure content only
+      content: `OGŁOSZENIE O PRACĘ:\n${jobDesc}\n\n========\n\nCV KANDYDATA:\n${cvText}`
+    }]
+  });
+
+  const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+  const clean = text.replace(/```json|```/g, '').trim();
+  const start = clean.indexOf('{');
+  if (start === -1) throw new Error('Nieprawidłowa odpowiedź serwera.');
+  let jsonStr = clean.slice(start);
+  const end = jsonStr.lastIndexOf('}');
+  jsonStr = end === -1 ? repairJson(jsonStr) : jsonStr.slice(0, end + 1);
+  return JSON.parse(jsonStr);
+}
+
 export default async function handler(req, res) {
   const origin = req.headers['origin'] || '';
   const allowed = process.env.ALLOWED_ORIGIN || 'https://znalezieni.pl';
@@ -110,25 +177,34 @@ export default async function handler(req, res) {
   }
 
   try {
-    const data = await callAnthropic({
-      model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
-      max_tokens: 6000,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: `OGŁOSZENIE O PRACĘ:\n${jobDesc}\n\n========\n\nCV KANDYDATÓW:\n${cvsText}` }]
-    });
+    // BIAS FIX: Parse individual CVs, analyze each in complete isolation
+    const cvs = parseCVs(cvsText);
 
-    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
-    const clean = text.replace(/```json|```/g, '').trim();
-    const start = clean.indexOf('{');
-    if (start === -1) throw new Error('Nieprawidłowa odpowiedź serwera.');
-    let jsonStr = clean.slice(start);
-    const end = jsonStr.lastIndexOf('}');
-    jsonStr = end === -1 ? repairJson(jsonStr) : jsonStr.slice(0, end + 1);
-    const parsed = JSON.parse(jsonStr);
-    return res.status(200).json(parsed);
+    // Each CV analyzed independently — parallel execution, no shared context
+    const results = await Promise.all(
+      cvs.map(async (cv) => {
+        const result = await analyzeOneCv(jobDesc, cv.text);
+        // BIAS FIX: Name re-attached AFTER analysis — never sent to Claude
+        return {
+          imie_nazwisko: cv.name,
+          wynik: result.wynik,
+          procent_dopasowania: result.procent_dopasowania,
+          rekomendacja: result.rekomendacja,
+          podsumowanie: result.podsumowanie,
+          mocne_strony: result.mocne_strony,
+          czego_brakuje: result.czego_brakuje,
+          czerwona_flaga: result.czerwona_flaga,
+        };
+      })
+    );
+
+    // Sort by score descending
+    results.sort((a, b) => b.wynik - a.wynik);
+
+    return res.status(200).json({ kandydaci: results });
   } catch (err) {
     if (err instanceof SyntaxError) {
-      return res.status(500).json({ error: 'Nie udało się przetworzyć odpowiedzi AI. Spróbuj z mniejszą liczbą CV.' });
+      return res.status(500).json({ error: 'Nie udało się przetworzyć odpowiedzi AI. Spróbuj z mniejszą liczbą CV lub krótszymi opisami.' });
     }
     const status = err.message.includes('przeciążony') ? 503 : err.message.includes('limit czasu') ? 504 : 500;
     return res.status(status).json({ error: err.message });
