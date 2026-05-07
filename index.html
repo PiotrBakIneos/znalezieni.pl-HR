@@ -761,9 +761,8 @@ input:checked+.toggle-slider::before{transform:translateX(18px)}
       <div class="loading-title">Analizuję rekrutację…</div>
       <div class="loading-sub">Trzy moduły AI pracują równolegle</div>
       <div class="loading-steps">
-        <div class="loading-step" id="lstep-0"><div class="step-dot"></div>Screening i ranking kandydatów</div>
+        <div class="loading-step" id="lstep-0"><div class="step-dot"></div>Analiza i ranking kandydatów</div>
         <div class="loading-step" id="lstep-1"><div class="step-dot"></div>Generowanie pytań screeningowych</div>
-        <div class="loading-step" id="lstep-2"><div class="step-dot"></div>Analiza dopasowania i luk</div>
       </div>
     </div>
 
@@ -796,16 +795,6 @@ input:checked+.toggle-slider::before{transform:translateX(18px)}
         <div class="result-section-body" id="sec-questions-body"></div>
       </div>
 
-      <!-- Section 3: Match -->
-      <div class="result-section" id="sec-match">
-        <div class="result-section-header" onclick="toggleSection('sec-match')">
-          <span class="result-section-icon">🎯</span>
-          <span class="result-section-title f-sora">Analiza dopasowania i luki</span>
-          <span class="result-section-count loading" id="sec-match-count">Ładuję…</span>
-          <span class="result-section-chevron">▼</span>
-        </div>
-        <div class="result-section-body" id="sec-match-body"></div>
-      </div>
     </div>
 
   <!-- ═══ TOOL 4: REVERSE MATCH FORM ═══ -->
@@ -1005,7 +994,7 @@ const FREE_LIMIT = 2;
 let uploadedJobText = '';
 let uploadedCvTexts = []; // [{name, text}]
 let pipelineRunning = false;
-let _lastScreen = null, _lastQuestions = null, _lastMatch = null;
+let _lastScreen = null, _lastQuestions = null;
 
 // ── Usage helpers ────────────────────────────────────────────
 function getUsage(){ return parseInt(localStorage.getItem(USAGE_KEY)||'0'); }
@@ -1268,13 +1257,12 @@ async function executeAnalysis(jobDesc, cvsText){
   document.getElementById('results-panel').style.display='block';
 
   // Animate steps
-  setStep(0,'active'); setStep(1,'active'); setStep(2,'active');
+  setStep(0,'active'); setStep(1,'active');
 
-  // Run all 3 in parallel
-  const [screenRes, questRes, matchRes] = await Promise.allSettled([
+  // Run 2 in parallel — screen now includes match data
+  const [screenRes, questRes] = await Promise.allSettled([
     callAPI('/api/screen', {jobDesc:jd, cvsText:cvs}),
-    callAPI('/api/questions', {jobDesc:jd}),
-    callAPI('/api/match', {jobDesc:jd, cvsText:cvs})
+    callAPI('/api/questions', {jobDesc:jd})
   ]);
 
   // Hide loading
@@ -1289,7 +1277,6 @@ async function executeAnalysis(jobDesc, cvsText){
   // Render results
   renderScreen(screenRes);
   renderQuestions(questRes);
-  renderMatch(matchRes);
 
   // Open first section
   openSection('sec-screen');
@@ -1353,7 +1340,7 @@ function renderScreen(result){
   const count = document.getElementById('sec-screen-count');
   if(result.status==='rejected'){
     count.textContent='Błąd'; count.className='result-section-count error';
-    body.innerHTML=`<div class="error-box" style="display:block">Błąd rankingu: ${esc(result.reason?.message||'Nieznany błąd')}</div>`;
+    body.innerHTML=`<div class="error-box" style="display:block">Błąd analizy: ${esc(result.reason?.message||'Nieznany błąd')}</div>`;
     return;
   }
   const kandydaci = result.value?.kandydaci||[];
@@ -1361,7 +1348,7 @@ function renderScreen(result){
   count.textContent = kandydaci.length+' kandydatów';
   count.className = 'result-section-count';
 
-  const counts={TAK:0,MOZE:0,NIE:0};
+  const counts={'ZAPROŚ':0,'ROZWAŻ':0,'ODRZUĆ':0};
   kandydaci.forEach(k=>{ if(counts[k.rekomendacja]!==undefined) counts[k.rekomendacja]++; });
 
   let html=`
@@ -1369,19 +1356,20 @@ function renderScreen(result){
     <button class="export-btn" onclick="exportScreenCSV()">↓ Eksportuj CSV</button>
   </div>
   <div class="stats-row">
-    <div class="stat-card" style="background:var(--green-dim);border-color:var(--green-border)"><div class="stat-num" style="color:var(--green)">${counts.TAK}</div><div class="stat-label" style="color:var(--green)">Polecani</div></div>
-    <div class="stat-card" style="background:var(--amber-dim);border-color:var(--amber-border)"><div class="stat-num" style="color:var(--amber)">${counts.MOZE}</div><div class="stat-label" style="color:var(--amber)">Do rozważenia</div></div>
-    <div class="stat-card" style="background:var(--red-dim);border-color:var(--red-border)"><div class="stat-num" style="color:var(--red)">${counts.NIE}</div><div class="stat-label" style="color:var(--red)">Odrzuceni</div></div>
+    <div class="stat-card" style="background:var(--green-dim);border-color:var(--green-border)"><div class="stat-num" style="color:var(--green)">${counts['ZAPROŚ']}</div><div class="stat-label" style="color:var(--green)">Zaproś</div></div>
+    <div class="stat-card" style="background:var(--amber-dim);border-color:var(--amber-border)"><div class="stat-num" style="color:var(--amber)">${counts['ROZWAŻ']}</div><div class="stat-label" style="color:var(--amber)">Rozważ</div></div>
+    <div class="stat-card" style="background:var(--red-dim);border-color:var(--red-border)"><div class="stat-num" style="color:var(--red)">${counts['ODRZUĆ']}</div><div class="stat-label" style="color:var(--red)">Odrzuć</div></div>
   </div>`;
-  kandydaci.forEach((k,i)=>{
+
+  const order={'ZAPROŚ':0,'ROZWAŻ':1,'ODRZUĆ':2};
+  const sorted=[...kandydaci].sort((a,b)=>(order[a.rekomendacja]??3)-(order[b.rekomendacja]??3)||(b.procent_dopasowania-a.procent_dopasowania));
+
+  sorted.forEach((k,i)=>{
     const c = screenColor(k.rekomendacja);
-    const pct = Math.round((k.wynik||0) * 10);
+    const pct = k.procent_dopasowania||Math.round((k.wynik||0)*10);
     const barColor = pct>=70?'var(--green)':pct>=40?'var(--amber)':'var(--red)';
     const str=(k.mocne_strony||[]).map(m=>`<div class="si" style="color:var(--green)">✓ ${esc(m)}</div>`).join('');
-    const wk=(k.slabe_strony||[]).map(s=>`<div class="wi" style="color:var(--text2)">✗ ${esc(s)}</div>`).join('');
-    const brakuje=(k.slabe_strony||[]).length>0
-      ? `<div class="brakuje-block"><div class="brakuje-label">BRAKUJE</div>${(k.slabe_strony||[]).map(s=>`<div class="brakuje-item">✗ ${esc(s)}</div>`).join('')}</div>`
-      : '';
+    const brakuje=(k.czego_brakuje||[]).map(s=>`<div class="brakuje-item">✗ ${esc(s)}</div>`).join('');
     const flag=k.czerwona_flaga?`<div class="red-flag">⚠ ${esc(k.czerwona_flaga)}</div>`:'';
     html+=`<div class="candidate-card" style="border-left-color:${c.border};border-color:var(--border)">
       <div class="card-top">
@@ -1402,8 +1390,11 @@ function renderScreen(result){
         </div>
       </div>
       <div class="card-body">
-        <div><div class="col-label" style="color:var(--green)">Mocne strony</div>${str}</div>
-        <div>${wk?`<div class="col-label" style="color:var(--text3)">Słabe strony</div>${wk}`:''}${brakuje}${flag}</div>
+        <div>${str?`<div class="col-label" style="color:var(--green)">Mocne strony</div>${str}`:''}</div>
+        <div>
+          ${brakuje?`<div class="brakuje-block"><div class="brakuje-label">BRAKUJE</div>${brakuje}</div>`:''}
+          ${flag}
+        </div>
       </div>
       <div class="ai-disclaimer">⚠️ Wynik wygenerowany przez AI. Narzędzie wspiera proces rekrutacji — ostateczna decyzja należy zawsze do rekrutera. Kandydaci powinni być poinformowani o wykorzystaniu AI w procesie rekrutacji.</div>
     </div>`;
@@ -1411,14 +1402,14 @@ function renderScreen(result){
   body.innerHTML=html;
 }
 function screenColor(rec){
-  if(rec==='TAK') return {bg:'var(--green-dim)',color:'var(--green)',border:'var(--green-border)'};
-  if(rec==='MOZE') return {bg:'var(--amber-dim)',color:'var(--amber)',border:'var(--amber-border)'};
+  if(rec==='ZAPROŚ') return {bg:'var(--green-dim)',color:'var(--green)',border:'var(--green-border)'};
+  if(rec==='ROZWAŻ') return {bg:'var(--amber-dim)',color:'var(--amber)',border:'var(--amber-border)'};
   return {bg:'var(--red-dim)',color:'var(--red)',border:'var(--red-border)'};
 }
 function exportScreenCSV(){
   if(!_lastScreen) return;
-  const h='Imię i nazwisko,Wynik,Rekomendacja,Czerwona flaga,Podsumowanie\n';
-  const rows=_lastScreen.map(k=>`"${k.imie_nazwisko}","${k.wynik}/10","${k.rekomendacja}","${k.czerwona_flaga||'-'}","${k.podsumowanie}"`).join('\n');
+  const h='Kandydat,Wynik,Dopasowanie %,Rekomendacja,Mocne strony,Czego brakuje,Czerwona flaga,Podsumowanie\n';
+  const rows=_lastScreen.map(k=>`"${k.imie_nazwisko}","${k.wynik}/10","${k.procent_dopasowania||''}%","${k.rekomendacja}","${(k.mocne_strony||[]).join('; ')}","${(k.czego_brakuje||[]).join('; ')}","${k.czerwona_flaga||'-'}","${k.podsumowanie}"`).join('\n');
   downloadCSV('\uFEFF'+h+rows,'ranking_kandydatow.csv');
 }
 
@@ -1455,84 +1446,6 @@ function exportQuestionsCSV(){
   const h='Nr,Pytanie,Eliminuje biasy,Uzasadnienie\n';
   const rows=_lastQuestions.map((p,i)=>`"${i+1}","${p.pytanie}","${(p.eliminuje_biasy||[]).join(', ')}","${p.uzasadnienie}"`).join('\n');
   downloadCSV('\uFEFF'+h+rows,'pytania_screeningowe.csv');
-}
-
-// ══════════════════════════════════════════════════════════════
-//  RENDER: MATCH (Fit/Gap)
-// ══════════════════════════════════════════════════════════════
-function renderMatch(result){
-  const body  = document.getElementById('sec-match-body');
-  const count = document.getElementById('sec-match-count');
-  if(result.status==='rejected'){
-    count.textContent='Błąd'; count.className='result-section-count error';
-    body.innerHTML=`<div class="error-box" style="display:block">Błąd analizy: ${esc(result.reason?.message||'Nieznany błąd')}</div>`;
-    return;
-  }
-  const kandydaci = (result.value?.kandydaci||[]);
-  _lastMatch = kandydaci;
-  const rola = result.value?.rola||'';
-  count.textContent = kandydaci.length+' kandydatów';
-  count.className = 'result-section-count';
-
-  const counts={'ZAPROŚ':0,'ROZWAŻ':0,'ODRZUĆ':0};
-  kandydaci.forEach(k=>{ if(counts[k.rekomendacja]!==undefined) counts[k.rekomendacja]++; });
-
-  let html=`
-  <div style="display:flex;justify-content:flex-end;margin-bottom:1rem"><button class="export-btn" onclick="exportMatchCSV()">↓ Eksportuj CSV</button></div>
-  <div class="stats-row">
-    <div class="stat-card" style="background:var(--green-dim);border-color:var(--green-border)"><div class="stat-num" style="color:var(--green)">${counts['ZAPROŚ']}</div><div class="stat-label" style="color:var(--green)">Zaproś</div></div>
-    <div class="stat-card" style="background:var(--amber-dim);border-color:var(--amber-border)"><div class="stat-num" style="color:var(--amber)">${counts['ROZWAŻ']}</div><div class="stat-label" style="color:var(--amber)">Rozważ</div></div>
-    <div class="stat-card" style="background:var(--red-dim);border-color:var(--red-border)"><div class="stat-num" style="color:var(--red)">${counts['ODRZUĆ']}</div><div class="stat-label" style="color:var(--red)">Odrzuć</div></div>
-  </div>`;
-
-  const order={'ZAPROŚ':0,'ROZWAŻ':1,'ODRZUĆ':2};
-  const sorted=[...kandydaci].sort((a,b)=>(order[a.rekomendacja]??3)-(order[b.rekomendacja]??3)||(b.procent_dopasowania-a.procent_dopasowania));
-
-  sorted.forEach((k,i)=>{
-    const c = matchColor(k.poziom);
-    const pasuje=(k.co_pasuje||[]).map(m=>`<div class="si" style="color:var(--green)">✓ ${esc(m)}</div>`).join('');
-    const brakuje=(k.czego_brakuje||[]).map(m=>`<div class="brakuje-item">✗ ${esc(m)}</div>`).join('');
-    const pct=k.procent_dopasowania||0;
-    const barColor=pct>=70?'var(--green)':pct>=40?'var(--amber)':'var(--red)';
-    html+=`<div class="candidate-card" style="border-left-color:${c.border};border-color:var(--border)">
-      <div class="card-top">
-        <div style="flex:1">
-          <div class="cname">${i+1}. ${esc(k.imie_nazwisko)}</div>
-          <div class="csummary">${esc(k.podsumowanie_dopasowania)}</div>
-          <div class="zgodnosc-block">
-            <div>
-              <div class="zgodnosc-label">ZGODNOŚĆ</div>
-              <div class="zgodnosc-pct" style="color:${barColor}">${pct}%</div>
-            </div>
-            <div class="zgodnosc-bar"><div class="zgodnosc-fill" style="width:${pct}%;background:${barColor}"></div></div>
-          </div>
-        </div>
-        <div class="card-badges">
-          <div class="badge" style="background:${c.bg};color:${c.color};border-color:${c.border}">${esc(k.rekomendacja)}</div>
-        </div>
-      </div>
-      <div class="card-body">
-        <div>${pasuje?`<div class="col-label" style="color:var(--green)">Co pasuje</div>${pasuje}`:''}</div>
-        <div>
-          ${brakuje?`<div class="brakuje-block"><div class="brakuje-label">BRAKUJE</div>${brakuje}</div>`:''}
-          ${k.uzasadnienie_rekomendacji?`<div class="red-flag" style="background:${c.bg};border-color:${c.border};color:${c.color}">💬 ${esc(k.uzasadnienie_rekomendacji)}</div>`:''}
-        </div>
-      </div>
-      <div class="ai-disclaimer">⚠️ Wynik wygenerowany przez AI. Narzędzie wspiera proces rekrutacji — ostateczna decyzja należy zawsze do rekrutera. Kandydaci powinni być poinformowani o wykorzystaniu AI w procesie rekrutacji.</div>
-    </div>`;
-  });
-  body.innerHTML=html;
-}
-function matchColor(level){
-  if(level==='WYSOKI') return {bg:'var(--green-dim)',color:'var(--green)',border:'var(--green-border)'};
-  if(level==='SREDNI') return {bg:'var(--amber-dim)',color:'var(--amber)',border:'var(--amber-border)'};
-  return {bg:'var(--red-dim)',color:'var(--red)',border:'var(--red-border)'};
-}
-function exportMatchCSV(){
-  if(!_lastMatch) return;
-  const h='Kandydat,Dopasowanie %,Poziom,Rekomendacja,Co pasuje,Czego brakuje,Uzasadnienie\n';
-  const rows=_lastMatch.map(k=>`"${k.imie_nazwisko}","${k.procent_dopasowania}%","${k.poziom}","${k.rekomendacja}","${(k.co_pasuje||[]).join('; ')}","${(k.czego_brakuje||[]).join('; ')}","${k.uzasadnienie_rekomendacji||''}"`).join('\n');
-  downloadCSV('\uFEFF'+h+rows,'dopasowanie_kandydatow.csv');
 }
 
 // ── CSV download helper ──────────────────────────────────────
