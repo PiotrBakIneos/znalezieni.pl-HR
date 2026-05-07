@@ -1785,7 +1785,7 @@ async function runReverse() {
 
     incUsage(); updateUsageBar();
     renderReverse(data);
-    document.getElementById('rresults-panel').style.display = '';
+    document.getElementById('rresults-panel').style.display = 'block';
     document.getElementById('rresults-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
     if (typeof gtag === 'function') gtag('event', 'reverse_complete');
   } catch(err) {
