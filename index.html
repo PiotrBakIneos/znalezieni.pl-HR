@@ -1780,7 +1780,8 @@ async function runReverse() {
       body: JSON.stringify({ cvText: cv, jobsText: jobs })
     });
     if (!resp.ok) { const e = await resp.json().catch(() => ({})); throw new Error(e.error || `HTTP ${resp.status}`); }
-    const data = await resp.json();
+    const data = await resp.json().catch(() => { throw new Error('Serwer zwrócił nieprawidłową odpowiedź — prawdopodobnie przekroczono limit czasu (10 ogłoszeń może być za dużo naraz).'); });
+    if (!data || !data.oferty) throw new Error('Brak wyników w odpowiedzi serwera.');
 
     incUsage(); updateUsageBar();
     renderReverse(data);
