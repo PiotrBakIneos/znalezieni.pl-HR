@@ -170,21 +170,27 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Maksymalnie 10 ogłoszeń naraz.' });
     }
 
-    // Match CV against each job posting independently and in parallel
-    const results = await Promise.all(
-      jobs.map(async (job) => {
-        const result = await matchOneJob(cvText, job.text);
-        return {
-          tytul: job.title,
-          procent_dopasowania: result.procent_dopasowania,
-          poziom: result.poziom,
-          podsumowanie: result.podsumowanie,
-          co_pasuje: result.co_pasuje,
-          czego_brakuje: result.czego_brakuje,
-          rekomendacja: result.rekomendacja,
-        };
-      })
-    );
+    // Process in batches of 3 sequentially to stay within Vercel timeout
+    const BATCH = 3;
+    const results = [];
+    for (let i = 0; i < jobs.length; i += BATCH) {
+      const batch = jobs.slice(i, i + BATCH);
+      const batchResults = await Promise.all(
+        batch.map(async (job) => {
+          const result = await matchOneJob(cvText, job.text);
+          return {
+            tytul: job.title,
+            procent_dopasowania: result.procent_dopasowania,
+            poziom: result.poziom,
+            podsumowanie: result.podsumowanie,
+            co_pasuje: result.co_pasuje,
+            czego_brakuje: result.czego_brakuje,
+            rekomendacja: result.rekomendacja,
+          };
+        })
+      );
+      results.push(...batchResults);
+    }
 
     // Sort by match percentage descending
     results.sort((a, b) => b.procent_dopasowania - a.procent_dopasowania);
