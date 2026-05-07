@@ -830,6 +830,7 @@ input:checked+.toggle-slider::before{transform:translateX(18px)}
       </div>
 
       <div class="truncation-warn" id="rtrunc-warn" style="display:none">⚠ Tekst CV lub ogłoszenia został skrócony, aby zmieścić się w limicie analizy.</div>
+      <div class="error-box" id="reverse-error" style="display:none"></div>
 
       <button class="analyze-btn" id="ranalyze-btn" onclick="runReverse()">
         <div class="btn-spinner" id="rbtn-spinner"></div>
@@ -1118,7 +1119,13 @@ async function handleCvFiles(files){
       const text = await extractPdfText(file);
       chip.className='file-chip done';
       chip.querySelector('.fs').textContent='✓ Gotowy';
-      const sn = file.name.replace(/\.pdf$/i,'');
+      const sn = (function(n){
+        n = n.replace(/\.pdf$/i,'');          // strip extension
+        n = n.replace(/^[\d_\-\s]+/, '');     // strip leading numbers/underscores
+        n = n.replace(/_/g, ' ');              // underscores to spaces
+        n = n.replace(/\s+/g, ' ').trim();    // collapse whitespace
+        return n;
+      })(file.name);
       uploadedCvTexts.push({name:sn, text});
       appendCvText(sn, text);
       updateCvCount();
@@ -1691,7 +1698,13 @@ async function handleRJobFiles(files) {
     const chip = document.createElement('div');
     chip.id = chipId; chip.className = 'file-chip processing';
     const safeName = file.name.replace(/'/g, "\'");
-    const title = file.name.replace(/\.pdf$/i, '');
+    const title = (function(n){
+      n = n.replace(/\.pdf$/i,'');
+      n = n.replace(/^[\d_\-\s]+/, '');
+      n = n.replace(/_/g, ' ');
+      n = n.replace(/\s+/g, ' ').trim();
+      return n;
+    })(file.name);
     chip.innerHTML = `<span>📋</span><span class="fn" title="${esc(file.name)}">${esc(file.name)}</span><span class="fs">🔄 Odczytuję…</span><button class="fr" onclick="removeRJobFile('${sid(file.name)}','${safeName}')">✕</button>`;
     container.appendChild(chip);
     try {
@@ -1735,6 +1748,8 @@ async function runReverse() {
   if (reverseRunning) return;
 
   hideError();
+  const re = document.getElementById('reverse-error');
+  if(re){ re.style.display='none'; re.textContent=''; }
   const cvText   = document.getElementById('rcv-text').value.trim();
   const jobsText = document.getElementById('rjobs-text').value.trim();
 
@@ -1773,7 +1788,9 @@ async function runReverse() {
     document.getElementById('rresults-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
     if (typeof gtag === 'function') gtag('event', 'reverse_complete');
   } catch(err) {
-    showError(err.message);
+    const re = document.getElementById('reverse-error');
+    if(re){ re.textContent = err.message; re.style.display = 'block'; }
+    else showError(err.message);
   } finally {
     reverseRunning = false;
     document.getElementById('rloading-panel').style.display = 'none';
